@@ -3,11 +3,7 @@ using PrisApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 
-
-// Initialize Playwright with proper error handling
 builder.Services.AddSingleton(_ =>
 {
     try
@@ -27,23 +23,24 @@ builder.Services.AddSingleton(_ =>
 });
 
 builder.Services.AddControllers();
-builder.Services.AddTransient<WillysScraper>();
+builder.Services.AddTransient<WillysScrapeService>();
+builder.Services.AddTransient<IcaScrapeService>();
 builder.Services.AddScoped<ScraperService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add CORS if needed
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowAll",
-        builder =>
-        {
-            builder.AllowAnyOrigin()
-                   .AllowAnyMethod()
-                   .AllowAnyHeader();
-        });
-});
+
+// builder.Services.AddCors(options =>
+// {
+//     options.AddPolicy("AllowAll",
+//         builder =>
+//         {
+//             builder.AllowAnyOrigin()
+//                    .AllowAnyMethod()
+//                    .AllowAnyHeader();
+//         });
+// });
 
 var app = builder.Build();
 

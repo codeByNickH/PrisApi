@@ -6,10 +6,12 @@ namespace PrisApi.Models.Scraping
         public string RawBrand { get; set; }
         public string RawPrice { get; set; }
         public string RawDiscount { get; set; }
+        public bool MemberDiscount { get; set; } = false;
         public string RawUnit { get; set; }
         public string ImageSrc { get; set; }
         public string ProductUrl { get; set; }
         public string StoreId { get; set; }
+        public string StoreLocation { get; set; }
         public string MaxQuantity { get; set; }
         public DateTime ScrapedAt { get; set; } = DateTime.UtcNow;
     }
