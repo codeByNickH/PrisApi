@@ -126,24 +126,5 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-
-        // [HttpPost("IcaOffers")]
-        // public async Task<IActionResult> ScrapeIcaOffers()
-        // {
-        //     _logger.LogInformation("Manual scrape of Ica initiated");
-
-        //     var job = await _scrapingService.ScrapeIcaOffersAsync();
-
-        //     return Ok(new
-        //     {
-        //         Success = job.Success,
-        //         ProductsScraped = job.ProductsScraped,
-        //         NewProducts = job.NewProducts,
-        //         UpdatedProducts = job.UpdatedProducts,
-        //         StartedAt = job.StartedAt,
-        //         CompletedAt = job.CompletedAt,
-        //         ErrorMessage = job.ErrorMessage
-        //     });
-        // }
     }
 }

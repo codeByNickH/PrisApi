@@ -6,6 +6,7 @@ namespace PrisApi.Repository
 {
     public class ScraperRepository : IRepository<Product>
     {
+        // For saving to database
         public ScraperRepository()
         {
             // Initialization code here

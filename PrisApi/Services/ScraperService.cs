@@ -274,5 +274,42 @@ namespace PrisApi.Services
 
             return job;
         }
+        public async Task<ScrapingJob> ScrapeCoopAsync(string category)
+        {
+            var job = new ScrapingJob
+            {
+                StoreId = "coop",
+                StartedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                _logger.LogInformation("Starting Coop scraping job at {time}", job.StartedAt);
+
+                var scraper = new CoopScraperService();
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+
+
+
+                job.ProductsScraped = scrapedProducts.Count;
+                job.Success = true;
+                job.CompletedAt = DateTime.UtcNow;
+
+                _logger.LogInformation("Coop scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Coop scraping");
+
+                job.Success = false;
+                job.ErrorMessage = ex.Message;
+                job.CompletedAt = DateTime.UtcNow;
+            }
+
+            // _dbContext.ScrapingJobs.Add(job);
+            // await _dbContext.SaveChangesAsync();
+
+            return job;
+        }
     }
 }

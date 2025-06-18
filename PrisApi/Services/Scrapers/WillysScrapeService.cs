@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.Playwright;
 using PrisApi.Models.Scraping;
 using PrisApi.Services.IService;
@@ -169,7 +170,7 @@ namespace PrisApi.Services.Scrapers
                         product.RawDiscount = rawDiscount.Trim();
                     }
 
-                    product.RawPrice = string.Join(" ", new[] { price1, price2, price4 }
+                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
                         .Where(p => !string.IsNullOrEmpty(p))
                         .Select(p => p.Trim()));
 
@@ -203,7 +204,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
+                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
                     }
                 }
 
@@ -337,7 +338,7 @@ namespace PrisApi.Services.Scrapers
                         price2 += string.Join("", price3);
                     }
 
-                    product.RawPrice = string.Join(" ", new[] { price1, price2 }
+                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2 }
                         .Where(p => !string.IsNullOrEmpty(p))
                         .Select(p => p.Trim()));
 
@@ -385,7 +386,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
+                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
                     }
                 }
 
@@ -518,7 +519,7 @@ namespace PrisApi.Services.Scrapers
                         price2 += string.Join("", price3);
                     }
 
-                    product.RawPrice = string.Join(" ", new[] { price1, price2 }
+                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2 }
                         .Where(p => !string.IsNullOrEmpty(p))
                         .Select(p => p.Trim()));
 
@@ -566,7 +567,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
+                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
                     }
                 }
 
@@ -699,7 +700,7 @@ namespace PrisApi.Services.Scrapers
                         price2 += string.Join("", price3);
                     }
 
-                    product.RawPrice = string.Join(" ", new[] { price1, price2 }
+                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2 }
                         .Where(p => !string.IsNullOrEmpty(p))
                         .Select(p => p.Trim()));
 
@@ -747,7 +748,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product.RawPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
+                        Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
                     }
                 }
 
@@ -790,6 +791,50 @@ namespace PrisApi.Services.Scrapers
             var page = await context.NewPageAsync();
 
             var products = new List<ScrapedProduct>();
+            var processedProductIds = new HashSet<string>();
+            var apiResponses = new List<string>();
+
+
+            page.Response += async (sender, response) =>
+            {
+                try
+                {
+                    if (response.Url.Contains("se/c/") || response.Url.Contains("products"))
+                    {
+                        Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
+
+                        if (response.Status == 200)
+                        {
+                            var contentType = response.Headers.ContainsKey("content-type")
+                                ? response.Headers["content-type"]
+                                : "";
+
+                            if (contentType.Contains("application/json"))
+                            {
+
+                                var content = await response.TextAsync();
+                                apiResponses.Add(content);
+
+                                var extractedProducts = ExtractProductsFromJson(content);
+
+                                foreach (var product in extractedProducts)
+                                {
+                                    if (!processedProductIds.Contains($"{product.RawName} {product.ID}"))
+                                    {
+                                        products.Add(product);
+                                        processedProductIds.Add($"{product.RawName} {product.ID}");
+                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product?.RawOrdPrice} {product?.RawUnit} {product?.OrdJmfPrice} {product?.RawDiscount} {product?.RawDiscountPrice} {product?.DiscountJmfPrice} {product?.MaxQuantity} {product.MemberDiscount}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error processing response: {ex.Message}");
+                }
+            };
 
             try
             {
@@ -803,7 +848,7 @@ namespace PrisApi.Services.Scrapers
                 await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
 
                 await Task.Delay(500);
-                const int maxScrollAttempts = 150;
+                const int maxScrollAttempts = 200;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;
@@ -834,159 +879,12 @@ namespace PrisApi.Services.Scrapers
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Height: {currentHeight}");
                 }
 
-                await Task.Delay(500);
-                var articleElements = await page.QuerySelectorAllAsync(_config.ProductListSelector);
+                Console.WriteLine($"Total products scraped: {products.Count}");
 
-                foreach (var element in articleElements)
+                if (apiResponses.Count > 0)
                 {
-                    var product = new ScrapedProduct
-                    {
-                        StoreId = StoreId,
-                        ScrapedAt = DateTime.UtcNow
-                    };
-
-                    // Get product title
-                    var nameElement = await element.QuerySelectorAsync("[itemprop=\"name\"]");
-                    if (nameElement != null)
-                    {
-                        product.RawName = await nameElement.TextContentAsync() ?? string.Empty;
-                        product.RawName = product.RawName.Trim();
-                    }
-
-                    // Get price
-                    // nr of items for price tag: sc-57d5cc93-13 hqMUdY
-                    // first nr tag: sc-4b8cc2f9-2 cCZiOx
-                    // last nr and st/kg tag: sc-4b8cc2f9-5 ggAScU, sc-4b8cc2f9-6 jxQDEl, Both(sc-4b8cc2f9-4 wIvZl)
-                    var priceElement1 = await element.QuerySelectorAsync("[class=\"sc-57d5cc93-13 hqMUdY\"]");
-                    var priceElement2 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-2 cCZiOx\"]");
-                    var priceElement3 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-5 ggAScU\"]");
-                    var priceElement4 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-6 jxQDEl\"]");
-
-                    var price1 = priceElement1 != null ? await priceElement1.TextContentAsync() : null;
-                    var price2 = priceElement2 != null ? await priceElement2.TextContentAsync() : null;
-                    var price3 = priceElement3 != null ? await priceElement3.TextContentAsync() : null;
-                    var price4 = priceElement4 != null ? await priceElement4.TextContentAsync() : null;
-
-                    if (!string.IsNullOrEmpty(price2))
-                    {
-                        if (!price2.EndsWith(","))
-                            price2 += ",";
-
-                        price2 += string.Join("", price3);
-                    }
-
-
-                    // Get discount info
-                    var ordPriceElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-16 HoYMj\"]");
-                    var ordJmfPriceElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-18 hTJkLl\"]");
-                    var discountJmfPriceElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
-
-                    var ordPrice = ordPriceElement != null ? await ordPriceElement.TextContentAsync() : null;
-                    var ordJmfPrice = ordJmfPriceElement != null ? await ordJmfPriceElement.TextContentAsync() : null;
-                    var discountJmfPrice = discountJmfPriceElement != null ? await discountJmfPriceElement.TextContentAsync() : null;
-
-                    var discJmfPrice = "";
-                    if (discountJmfPrice != null)
-                    {
-                        var parts = discountJmfPrice.Split(new[] { '•' }, 2);
-                        discJmfPrice = parts[0].TrimEnd(' ').Trim();
-
-                        if (parts.Length > 1)
-                        {
-                            product.MaxQuantity = parts[1].Trim();
-                        }
-                        else
-                        {
-                            product.MaxQuantity = "Inget max antal";
-                        }
-                    }
-                    var memberElement = await element.QuerySelectorAsync("[class=\"sc-e20bc8d3-1 bdMExn sc-4b8cc2f9-7 chdLmu\"]");
-                    var memberDiscount = memberElement != null ? await memberElement.TextContentAsync() : null;
-                    if (memberDiscount != null)
-                    {
-                        product.MemberDiscount = true;
-                    }
-
-                    var savingElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-14 bwnHuF\"]");
-                    if (savingElement != null)
-                    {
-                        var rawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
-                        if (!string.IsNullOrEmpty(rawDiscount) && rawDiscount.Contains("för"))
-                        {
-                            price1 = rawDiscount;
-                            var ordParts = ordPrice.Split(new[] { ' ' }, 4);
-                            var priceOrd = ordParts[2].TrimStart().TrimEnd();
-                            var kgOrSt = ordParts[3].TrimStart().Trim();
-                            var parts = rawDiscount.Split(new[] { ' ' }, 2);
-                            var i = parts[0].TrimEnd(' ').Trim();
-                            int nr = Int32.Parse(i);
-                            float price = float.Parse(price2);
-                            float ordPriceFloat = float.Parse(priceOrd);
-                            var saved = ordPriceFloat * nr - price;
-                            var savedPer = saved / nr;
-
-                            product.RawDiscount = "Spara " + Math.Round(savedPer, 2) + "0 " + kgOrSt;
-                        }
-                        else
-                        {
-                            product.RawDiscount = rawDiscount.Trim();
-                        }
-                    }
-                    else if (ordPrice != null)
-                    {
-                        var ordParts = ordPrice.Split(new[] { ' ' }, 4);
-                        var priceOrd = ordParts[2].TrimStart().TrimEnd();
-                        var kgOrSt = ordParts[3].TrimStart().Trim();
-                        float price = float.Parse(price2);
-                        float ordPriceFloat = float.Parse(priceOrd);
-                        var saved = ordPriceFloat - price;
-
-                        if (ordPriceFloat == price)
-                        {
-                            product.RawDiscount = "";
-                        }
-                        else
-                        {
-                            product.RawDiscount = "Spara " + Math.Round(saved, 2) + " " + kgOrSt;
-                        }
-                    }
-
-                    product.RawPrice = string.Join(" ", new[] { price1, price2, price4 }
-                        .Where(p => !string.IsNullOrEmpty(p))
-                        .Select(p => p.Trim()));
-
-                    // Get brand/additional info
-                    var brandElement = await element.QuerySelectorAsync("[itemprop=\"brand\"]");
-                    if (brandElement != null)
-                    {
-                        var brandText = await brandElement.TextContentAsync();
-                        if (!string.IsNullOrEmpty(brandText))
-                        {
-                            var parts = brandText.Split(new[] { ' ' }, 2);
-
-                            product.RawBrand = parts[0].Trim();
-
-                            if (parts.Length > 1)
-                            {
-                                var unitPart = parts[1].TrimEnd(' ').Trim();
-                                product.RawUnit = unitPart;
-                            }
-                        }
-                    }
-
-                    var imageElement = await element.QuerySelectorAsync("[itemprop=\"image\"]");
-                    if (imageElement != null)
-                    {
-                        product.ImageSrc = await imageElement.GetAttributeAsync("src") ?? string.Empty;
-                    }
-
-
-                    // Add product to list
-                    if (!string.IsNullOrEmpty(product.RawName))
-                    {
-                        products.Add(product);
-                        Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product?.RawPrice?.ToString() + " " + product?.RawDiscount?.ToString() + " " + product?.MaxQuantity?.ToString() + " " + product.MemberDiscount);
-                    }
+                    File.WriteAllText("api_willys_responses_debug.json", string.Join("\n---\n", apiResponses));
+                    Console.WriteLine("API responses saved to api_willys_responses_debug.json for debugging");
                 }
 
                 return products;
@@ -996,6 +894,274 @@ namespace PrisApi.Services.Scrapers
                 Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
                 throw;
             }
+        }
+        private List<ScrapedProduct> ExtractProductsFromJson(string jsonContent)
+        {
+            var products = new List<ScrapedProduct>();
+
+            try
+            {
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
+
+                // Try to parse as a generic JSON document
+                using var doc = JsonDocument.Parse(jsonContent);
+                var root = doc.RootElement;
+
+                // Look for products in common patterns
+                var productElements = FindProductElements(root);
+
+                foreach (var element in productElements)
+                {
+                    var product = ExtractProductFromElement(element);
+                    if (product != null && !string.IsNullOrEmpty(product.RawName))
+                    {
+                        products.Add(product);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error parsing JSON: {ex.Message}");
+            }
+
+            return products;
+        }
+
+        private List<JsonElement> FindProductElements(JsonElement root)
+        {
+            var products = new List<JsonElement>();
+
+            // Common patterns for finding products in JSON responses
+            if (root.ValueKind == JsonValueKind.Object)
+            {
+                // Check for common product array property names
+                string[] productArrayNames = { "products", "items", "data", "results", "productList", "articles", "promotion" };
+
+                foreach (var propName in productArrayNames)
+                {
+                    if (root.TryGetProperty(propName, out var prop) && prop.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var item in prop.EnumerateArray())
+                        {
+                            products.Add(item);
+                        }
+                        break;
+                    }
+                }
+
+                // If no direct array found, search recursively
+                if (products.Count == 0)
+                {
+                    SearchForProductArrays(root, products);
+                }
+            }
+            else if (root.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in root.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object)
+                    {
+                        products.Add(item);
+                    }
+                }
+            }
+
+            return products;
+        }
+
+        private void SearchForProductArrays(JsonElement element, List<JsonElement> products)
+        {
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        // Check if this looks like a product array
+                        var array = prop.Value;
+                        if (array.GetArrayLength() > 0)
+                        {
+                            var firstItem = array[0];
+                            if (IsLikelyProduct(firstItem))
+                            {
+                                foreach (var item in array.EnumerateArray())
+                                {
+                                    products.Add(item);
+                                }
+                            }
+                        }
+                    }
+                    else if (prop.Value.ValueKind == JsonValueKind.Object)
+                    {
+                        SearchForProductArrays(prop.Value, products);
+                    }
+                }
+            }
+        }
+
+        private bool IsLikelyProduct(JsonElement element)
+        {
+            if (element.ValueKind != JsonValueKind.Object) return false;
+
+            // Check for common product properties
+            string[] productProperties = { "name", "title", "productName", "price", "id", "sku", "productId" };
+            int matchCount = 0;
+
+            foreach (var prop in element.EnumerateObject())
+            {
+                if (productProperties.Any(p => prop.Name.ToLower().Contains(p.ToLower())))
+                {
+                    matchCount++;
+                }
+            }
+
+            return matchCount >= 2;
+        }
+        private ScrapedProduct ExtractProductFromElement(JsonElement element)
+        {
+            var product = new ScrapedProduct
+            {
+                StoreId = StoreId,
+                ScrapedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                // Extract name directly
+                product.RawName = GetStringProperty(element, "name");
+
+                // Extract brand/manufacturer
+                product.RawBrand = GetStringProperty(element, "manufacturer");
+
+                // Extract unit/volume
+                product.RawUnit = GetStringProperty(element, "displayVolume");
+
+                // Extract image URL
+                if (element.TryGetProperty("image", out var imageObj) && imageObj.ValueKind == JsonValueKind.Object)
+                {
+                    product.ImageSrc = GetStringProperty(imageObj, "url");
+                }
+
+                product.RawOrdPrice = GetStringProperty(element, "priceNoUnit");
+
+                // Get compare price if needed
+                var ordComparePrice = GetStringProperty(element, "comparePrice");
+                var comparePriceUnit = GetStringProperty(element, "comparePriceUnit");
+                if (!string.IsNullOrEmpty(ordComparePrice) && !string.IsNullOrEmpty(comparePriceUnit))
+                {
+                    product.OrdJmfPrice = $"{ordComparePrice}/{comparePriceUnit}";
+                }
+
+                // Check if there are active promotions
+                if (element.TryGetProperty("potentialPromotions", out var promotions) &&
+                    promotions.ValueKind == JsonValueKind.Array &&
+                    promotions.GetArrayLength() > 0)
+                {
+                    var firstPromo = promotions[0];
+
+                    // Get promotional price if available
+                    if (firstPromo.TryGetProperty("price", out var promoPrice) &&
+                        promoPrice.ValueKind == JsonValueKind.Object)
+                    {
+                        product.RawDiscountPrice = GetStringProperty(promoPrice, "formattedValue");
+                        // Add qualifyingCount somewhere if count > 0
+                    }
+
+                    product.DiscountJmfPrice = GetStringProperty(firstPromo, "comparePrice");
+
+                    // Get discount/savings info
+                    var conditionLabel = GetStringProperty(firstPromo, "conditionLabel");
+                    var rewardLabel = GetStringProperty(firstPromo, "rewardLabel");
+
+                    // Combine discount information
+                    if (!string.IsNullOrEmpty(conditionLabel) && !conditionLabel.Contains("för"))
+                    {
+                        product.RawDiscount = conditionLabel;
+                    }
+                    else if (!string.IsNullOrEmpty(rewardLabel) && !string.IsNullOrEmpty(conditionLabel) && conditionLabel.Contains("för"))
+                    {
+                        string pricePer = $"{conditionLabel} {rewardLabel}";
+                        var savings = GetStringProperty(element, "savingsAmount").ToString();
+                        product.RawDiscount = $"{pricePer}, save: {savings}0";
+                    }
+
+                    // Get max quantity from redeemLimitLabel
+                    var redeemLimit = GetStringProperty(firstPromo, "redeemLimitLabel");
+                    if (!string.IsNullOrEmpty(redeemLimit))
+                    {
+                        product.MaxQuantity = redeemLimit;
+                    }
+
+                    // Get campaign type for member discount
+                    var campaignType = GetStringProperty(firstPromo, "campaignType");
+                    if (campaignType == "LOYALTY")
+                    {
+                        product.MemberDiscount = true;
+                    }
+                }
+
+                // Get price unit info (kr/st, kr/kg, etc.)
+                var priceUnit = GetStringProperty(element, "priceUnit");
+                if (!string.IsNullOrEmpty(priceUnit) && !product.RawOrdPrice.Contains(priceUnit))
+                {
+                    product.RawOrdPrice += $" {priceUnit}";
+                }
+
+                // If brand not found in manufacturer, try extracting from productLine2
+                if (string.IsNullOrEmpty(product.RawBrand))
+                {
+                    var productLine2 = GetStringProperty(element, "productLine2");
+                    if (!string.IsNullOrEmpty(productLine2))
+                    {
+                        var parts = productLine2.Split(',');
+                        if (parts.Length > 0)
+                        {
+                            product.RawBrand = parts[0].Trim();
+                        }
+                    }
+                }
+
+                // Default max quantity if not set
+                if (string.IsNullOrEmpty(product.MaxQuantity))
+                {
+                    product.MaxQuantity = "Inget max antal";
+                }
+
+                product.ID = GetStringProperty(element, "code");
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error extracting product from Willys JSON element: {ex.Message}");
+                return null;
+            }
+
+            return product;
+        }
+        private string GetStringProperty(JsonElement element, params string[] propertyNames)
+        {
+            foreach (var propName in propertyNames)
+            {
+                // Try exact match
+                if (element.TryGetProperty(propName, out var prop))
+                {
+                    return prop.ToString();
+                }
+
+                // Try case-insensitive match
+                foreach (var actualProp in element.EnumerateObject())
+                {
+                    if (actualProp.Name.Equals(propName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return actualProp.Value.ToString();
+                    }
+                }
+            }
+
+            return null;
         }
     }
 }

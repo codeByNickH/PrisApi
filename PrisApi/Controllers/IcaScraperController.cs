@@ -11,7 +11,8 @@ namespace PrisApi.Controllers
         private readonly ILogger<IcaScraperController> _logger;
         private readonly List<string> category = [
             "kött-chark-fågel/3b5facca-3c54-421b-b46c-5397d7548270?source=navigation",
-            "mejeri-ost/c4af8a37-6d03-478e-9c4d-f76907a52c3c?source=navigation"
+            "mejeri-ost/c4af8a37-6d03-478e-9c4d-f76907a52c3c?source=navigation",
+            "categories?source=navigation"
             ];
         public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger)
         {
@@ -60,6 +61,24 @@ namespace PrisApi.Controllers
             _logger.LogInformation("Manual scraping of Ica dariy initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[1]);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("IcaAll")]
+        public async Task<IActionResult> ScrapeIcaAll()
+        {
+            _logger.LogInformation("Manual scraping of Ica all initiated");
+
+            var job = await _scraperService.ScrapeIcaAsync(category[2]);
 
             return Ok(new
             {
