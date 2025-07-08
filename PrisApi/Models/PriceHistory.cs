@@ -12,6 +12,10 @@ public class PriceHistory
 
     [Column(TypeName = "decimal(10, 2)")]
     public decimal Price { get; set; }
+    [Column(TypeName = "decimal(10, 2)")]
+    public decimal JmfPrice { get; set; }
+    
+    // Add jmfPrice is per kg/st/l
 
     public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
 

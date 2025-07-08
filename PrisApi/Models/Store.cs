@@ -9,6 +9,7 @@ namespace PrisApi.Models
 
         [Required, MaxLength(100)]
         public string Name { get; set; }
+        public string StoreLocation { get; set; }
 
         [Required]
         public string Website { get; set; }

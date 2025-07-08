@@ -21,6 +21,7 @@ namespace PrisApi.Models
         public decimal? OriginalPrice { get; set; }
         
         public decimal DiscountPercentage { get; set; }
+        public bool MemberDiscount { get; set; }
         
         [MaxLength(100)]
         public string Category { get; set; }
@@ -29,6 +30,7 @@ namespace PrisApi.Models
         public string Unit { get; set; }
         
         public string ImageUrl { get; set; }
+        public string MaxQuantity { get; set; }
         
         [Required]
         public string StoreId { get; set; }
