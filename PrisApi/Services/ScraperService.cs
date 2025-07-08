@@ -1,3 +1,4 @@
+using PrisApi.Helper.IHelper;
 using PrisApi.Models;
 using PrisApi.Models.Scraping;
 using PrisApi.Services.Scrapers;
@@ -7,14 +8,14 @@ namespace PrisApi.Services
     public class ScraperService
     {
         private readonly ILogger<ScraperService> _logger;
-
-        public ScraperService(ILogger<ScraperService> logger)
+        private readonly IScrapeHelper _scrapeHelper;
+        public ScraperService(IScrapeHelper scrapeHelper, ILogger<ScraperService> logger)
         {
-
+            _scrapeHelper = scrapeHelper;
             _logger = logger;
         }
 
-        public async Task<ScrapingJob> ScrapeWillysOffersAsync(string store)
+        public async Task<ScrapingJob> ScrapeWillysOffersAsync(int location)
         {
             var job = new ScrapingJob
             {
@@ -26,8 +27,8 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
 
-                var scraper = new WillysScrapeService();
-                var scrapedProducts = await scraper.ScrapeDiscountProductsAsync(store);
+                var scraper = new WillysScrapeService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeDiscountProductsAsync(location);
 
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
@@ -61,8 +62,8 @@ namespace PrisApi.Services
             try
             {
                 _logger.LogInformation("Starting Ica scraping job at {time}", job.StartedAt);
-
-                var scraper = new IcaScrapeService();
+                
+                var scraper = new IcaScrapeService(_scrapeHelper);
                 var scrapedProducts = await scraper.ScrapeDiscountProductsAsync();
 
 
@@ -87,8 +88,7 @@ namespace PrisApi.Services
 
             return job;
         }
-
-        public async Task<ScrapingJob> ScrapeWillysAsync(string category)
+        public async Task<ScrapingJob> ScrapeWillysAsync(string category, int location)
         {
             var job = new ScrapingJob
             {
@@ -100,8 +100,8 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
 
-                var scraper = new WillysScrapeService();
-                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+                var scraper = new WillysScrapeService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category, location);
 
 
 
@@ -125,119 +125,7 @@ namespace PrisApi.Services
 
             return job;
         }
-
-        public async Task<ScrapingJob> ScrapeWillysMeatAsync()
-        {
-            var job = new ScrapingJob
-            {
-                StoreId = "willys",
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
-
-                var scraper = new WillysScrapeService();
-                var scrapedProducts = await scraper.ScrapeMeatProductsAsync();
-
-
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("Willys scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Willys scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
-            return job;
-        }
-        public async Task<ScrapingJob> ScrapeWillysDariyAsync()
-        {
-            var job = new ScrapingJob
-            {
-                StoreId = "willys",
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
-
-                var scraper = new WillysScrapeService();
-                var scrapedProducts = await scraper.ScrapeDariyProductsAsync();
-
-
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("Willys scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Willys scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
-            return job;
-        }
-        public async Task<ScrapingJob> ScrapeWillysFruitAsync()
-        {
-            var job = new ScrapingJob
-            {
-                StoreId = "willys",
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
-
-                var scraper = new WillysScrapeService();
-                var scrapedProducts = await scraper.ScrapeFruitProductsAsync();
-
-
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("Willys scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Willys scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
-            return job;
-        }
-        public async Task<ScrapingJob> ScrapeIcaAsync(string category)
+        public async Task<ScrapingJob> ScrapeIcaAsync(string category, int location)
         {
             var job = new ScrapingJob
             {
@@ -249,8 +137,8 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Ica scraping job at {time}", job.StartedAt);
 
-                var scraper = new IcaScrapeService();
-                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+                var scraper = new IcaScrapeService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category, location);
 
 
 
@@ -274,7 +162,7 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeCoopAsync(string category)
+        public async Task<ScrapingJob> ScrapeCoopAsync(string category, int location)
         {
             var job = new ScrapingJob
             {
@@ -286,8 +174,8 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Coop scraping job at {time}", job.StartedAt);
 
-                var scraper = new CoopScraperService();
-                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+                var scraper = new CoopScraperService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category, location);
 
 
 
@@ -300,6 +188,80 @@ namespace PrisApi.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error during Coop scraping");
+
+                job.Success = false;
+                job.ErrorMessage = ex.Message;
+                job.CompletedAt = DateTime.UtcNow;
+            }
+
+            // _dbContext.ScrapingJobs.Add(job);
+            // await _dbContext.SaveChangesAsync();
+
+            return job;
+        }
+        public async Task<ScrapingJob> ScrapeHemkopAsync(string category)
+        {
+            var job = new ScrapingJob
+            {
+                StoreId = "hemkop",
+                StartedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                _logger.LogInformation("Starting Hemkop scraping job at {time}", job.StartedAt);
+
+                var scraper = new HemkopScraperService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+
+
+
+                job.ProductsScraped = scrapedProducts.Count;
+                job.Success = true;
+                job.CompletedAt = DateTime.UtcNow;
+
+                _logger.LogInformation("Hemkop scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Hemkop scraping");
+
+                job.Success = false;
+                job.ErrorMessage = ex.Message;
+                job.CompletedAt = DateTime.UtcNow;
+            }
+
+            // _dbContext.ScrapingJobs.Add(job);
+            // await _dbContext.SaveChangesAsync();
+
+            return job;
+        }
+        public async Task<ScrapingJob> ScrapeCityGrossAsync(string category, int location)
+        {
+            var job = new ScrapingJob
+            {
+                StoreId = "citygross",
+                StartedAt = DateTime.UtcNow
+            };
+
+            try
+            {
+                _logger.LogInformation("Starting CityGross scraping job at {time}", job.StartedAt);
+
+                var scraper = new CitygrossScraperService(_scrapeHelper);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category, location);
+
+
+
+                job.ProductsScraped = scrapedProducts.Count;
+                job.Success = true;
+                job.CompletedAt = DateTime.UtcNow;
+
+                _logger.LogInformation("CityGross scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during CityGross scraping");
 
                 job.Success = false;
                 job.ErrorMessage = ex.Message;

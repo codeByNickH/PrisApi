@@ -1,19 +1,18 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
 using PrisApi.Helper.IHelper;
 using PrisApi.Models.Scraping;
-using PrisApi.Services.IService;
 
 namespace PrisApi.Services.Scrapers
 {
-    public class WillysScrapeService
+    public class HemkopScraperService
     {
         private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly bool _isCloud;
-        private const string StoreId = "willys";
-
-        public WillysScrapeService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
+        private const string StoreId = "hemkop";
+        public HemkopScraperService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
         {
             _scrapeHelper = scrapeHelper;
 
@@ -22,15 +21,18 @@ namespace PrisApi.Services.Scrapers
             _config = config ?? new ScraperConfig
             {
                 StoreId = StoreId,
-                BaseUrl = "https://www.willys.se/",
+                BaseUrl = "https://www.hemkop.se/",
                 ProductListSelector = "[data-testid=\"product\"]",
                 RequestDelayMs = 50,
                 UseJavaScript = true
             };
         }
 
-        public async Task<List<ScrapedProduct>> ScrapeDiscountProductsAsync(int location)
+        public async Task<List<ScrapedProduct>> ScrapeDiscountProductsAsync()
         {
+            _config.BaseUrl = "erbjudanden";
+
+
             using var playwright = await Playwright.CreateAsync();
 
             var options = new BrowserTypeLaunchOptions
@@ -62,49 +64,49 @@ namespace PrisApi.Services.Scrapers
 
             try
             {
-                await page.GotoAsync(_config.BaseUrl + "erbjudanden/butik", new PageGotoOptions
+                await page.GotoAsync(_config.BaseUrl, new PageGotoOptions
                 {
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
-
+                // Reject cookies
                 await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]");
                 await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
 
-                await page.WaitForSelectorAsync("[class=\"sc-8db9fd1a-0 haTzby\"]");
-                await page.ClickAsync("[class=\"sc-59a4afd4-0 fTQtwW sc-59bd60e8-1 fnKnyn\"]");
+                await Task.Delay(500);
+                const int maxScrollAttempts = 100;
+                int previousHeight = 0;
+                int noChangeCount = 0;
+                const int maxNoChangeAttempts = 3;
 
-                await page.WaitForSelectorAsync("input[placeholder=\"Sök efter din butik\"]", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
-                await page.FillAsync("input[placeholder=\"Sök efter din butik\"]", location.ToString());
-
-                await page.WaitForSelectorAsync("[data-testid=\"pickup-location-list-item\"]", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
-                await page.ClickAsync("[data-testid=\"pickup-location-list-item\"]");
-
-                // Close Login pop-up
-                // await page.WaitForSelectorAsync("[class=\"sc-56561d8a-5 eQuJvz\"]");
-                // await page.ClickAsync("[data-testid=\"modal-close-btn\"]");
-
-                var loadMoreButtonSelector = "[data-testid=\"load-more-btn\"]";
-                const int maxLoadMoreAttempts = 10;
-
-                for (int i = 0; i < maxLoadMoreAttempts; i++)
+                for (int i = 0; i < maxScrollAttempts; i++)
                 {
-                    try
-                    {
-                        await page.WaitForSelectorAsync(loadMoreButtonSelector, new PageWaitForSelectorOptions { Timeout = 5000 });
-                        await page.ClickAsync(loadMoreButtonSelector);
+                    var currentHeight = await page.EvaluateAsync<int>("document.documentElement.scrollHeight");
 
-                        Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
-                        await Task.Delay(500); // Give time for content to load
-                    }
-                    catch (Exception ex)
+                    if (currentHeight == previousHeight)
                     {
-                        Console.WriteLine($"No more \"load more\" button found or error after {i} clicks: {ex.Message}");
-                        break;
+                        noChangeCount++;
+                        if (noChangeCount >= maxNoChangeAttempts)
+                        {
+                            Console.WriteLine($"No height change for {maxNoChangeAttempts} attempts - assuming all content loaded");
+                            break;
+                        }
                     }
+                    else
+                    {
+                        noChangeCount = 0;
+                    }
+
+                    await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
+                    await Task.Delay(500);
+
+                    previousHeight = currentHeight;
+                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Height: {currentHeight}");
                 }
 
-                var articleElements = await page.QuerySelectorAllAsync(_config.ProductListSelector);
+                await Task.Delay(500);
 
+                var articleElements = await page.QuerySelectorAllAsync(_config.ProductListSelector);
+                System.Console.WriteLine(articleElements.Count.ToString());
                 foreach (var element in articleElements)
                 {
                     var product = new ScrapedProduct
@@ -113,17 +115,17 @@ namespace PrisApi.Services.Scrapers
                         ScrapedAt = DateTime.UtcNow
                     };
 
-                    var nameElement = await element.QuerySelectorAsync("[itemprop=\"name\"]");
+                    var nameElement = await element.QuerySelectorAsync("[class=\"offer-card__title\"]");
                     if (nameElement != null)
                     {
                         product.RawName = await nameElement.TextContentAsync() ?? string.Empty;
                         product.RawName = product.RawName.Trim();
                     }
 
-                    var priceElement1 = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-14 bwnHuF\"]");
-                    var priceElement2 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-2 cCZiOx\"]");
-                    var priceElement3 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-5 ggAScU\"]");
-                    var priceElement4 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-6 jxQDEl\"]");
+                    var priceElement1 = await element.QuerySelectorAsync("[class=\"price-splash__text__prefix\"]");
+                    var priceElement2 = await element.QuerySelectorAsync("[class=\"price-splash__text__firstValue\"]");
+                    var priceElement3 = await element.QuerySelectorAsync("[class=\"price-splash__text__secondaryValue\"]");
+                    var priceElement4 = await element.QuerySelectorAsync("[class=\"price-splash__text__suffix\"]");
 
                     var price1 = priceElement1 != null ? await priceElement1.TextContentAsync() : null;
                     var price2 = priceElement2 != null ? await priceElement2.TextContentAsync() : null;
@@ -132,43 +134,22 @@ namespace PrisApi.Services.Scrapers
 
                     if (!string.IsNullOrEmpty(price2))
                     {
-                        if (!price2.EndsWith("."))
+                        if (!price2.EndsWith(".") && !price2.EndsWith(":-"))
                             price2 += ".";
 
                         price2 += string.Join("", price3);
                     }
 
-                    var saveElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
-                    var maxQElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-16 HoYMj\"]");
-
-                    var save = saveElement != null ? await saveElement.TextContentAsync() : null;
-                    var maxQ = maxQElement != null ? await maxQElement.TextContentAsync() : null;
-                    if (maxQ != null)
-                    {
-                        product.MaxQuantity = maxQ;
-                    }
-                    else
-                    {
-                        product.MaxQuantity = "Inget max antal";
-                    }
-
-                    var memberElement = await element.QuerySelectorAsync("[class=\"sc-e20bc8d3-1 bdMExn sc-4b8cc2f9-7 chdLmu\"]");
-                    var memberDiscount = memberElement != null ? await memberElement.TextContentAsync() : null;
-                    if (memberDiscount != null)
-                    {
-                        product.MemberDiscount = true;
-                    }
-
-                    var savingElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
-                    if (savingElement != null)
-                    {
-                        var rawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
-                        product.RawDiscount = rawDiscount.Trim();
-                    }
-
                     product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
                         .Where(p => !string.IsNullOrEmpty(p))
                         .Select(p => p.Trim()));
+
+                    var savingElement = await element.QuerySelectorAsync("[class=\"sc-57d5cc93-14 kTSKTN\"]");
+                    if (savingElement != null)
+                    {
+                        product.RawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
+                        product.RawDiscount = product.RawDiscount.Trim();
+                    }
 
                     var brandElement = await element.QuerySelectorAsync("[itemprop=\"brand\"]");
                     if (brandElement != null)
@@ -194,10 +175,17 @@ namespace PrisApi.Services.Scrapers
                         product.ImageSrc = await imageElement.GetAttributeAsync("src") ?? string.Empty;
                     }
 
+                    var maxQuantityElement = await element.QuerySelectorAsync("[class=\"sc-57d5cc93-15 NqJbq\"]");
+
+                    var maxQuantity = maxQuantityElement != null ?
+                        await maxQuantityElement.TextContentAsync() : "Inget max antal";
+
+                    product.MaxQuantity = maxQuantity;
+
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
+                        Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product?.RawOrdPrice?.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
                     }
                 }
 
@@ -209,8 +197,7 @@ namespace PrisApi.Services.Scrapers
                 throw;
             }
         }
-
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -242,6 +229,7 @@ namespace PrisApi.Services.Scrapers
             var products = new List<ScrapedProduct>();
             var processedProductIds = new HashSet<string>();
             var apiResponses = new List<string>();
+
 
             page.Response += async (sender, response) =>
             {
@@ -276,7 +264,6 @@ namespace PrisApi.Services.Scrapers
                                 }
                             }
                         }
-
                     }
                 }
                 catch (Exception ex)
@@ -285,42 +272,17 @@ namespace PrisApi.Services.Scrapers
                 }
             };
 
-
             try
             {
-                await page.GotoAsync(_config.BaseUrl, new PageGotoOptions
+                await page.GotoAsync(_config.BaseUrl + category, new PageGotoOptions
                 {
-                    WaitUntil = WaitUntilState.DOMContentLoaded,
+                    WaitUntil = WaitUntilState.NetworkIdle
                 });
 
                 await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]");
                 await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
 
-                await page.WaitForSelectorAsync("[data-testid=\"delivery-picker-toggle\"]");
-                await page.ClickAsync("[data-testid=\"delivery-picker-toggle\"]");
-
-                await page.WaitForSelectorAsync("[data-testid=\"delivery-method-pickUpInStore\"]");
-                await page.ClickAsync("[data-testid=\"delivery-method-pickUpInStore\"]");
-
-                await page.WaitForSelectorAsync("input[placeholder=\"Sök på butik\"]");
-                await page.FillAsync("input[placeholder=\"Sök på butik\"]", location.ToString()); 
-
-                await page.WaitForSelectorAsync("[class=\"sc-4b41f1b4-2 cIxYss\"]");
-                await page.ClickAsync("[class=\"sc-4b41f1b4-2 cIxYss\"]");
-
-                await Task.Delay(500); // Picking store needs await to go through does not work otherwise.
-
-                // await page.WaitForLoadStateAsync(LoadState.NetworkIdle); // Why does this not work?
-
-                await page.WaitForSelectorAsync("[data-testid=\"slidein-close-button\"]");
-                await page.ClickAsync("[data-testid=\"slidein-close-button\"]");
-
-                await page.WaitForSelectorAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
-                await page.ClickAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
-
-                await page.WaitForSelectorAsync($"a[href=\"{category}\"]");
-                await page.ClickAsync($"a[href=\"{category}\"]");
-
+                await Task.Delay(500);
                 const int maxScrollAttempts = 200;
                 int previousHeight = 0;
                 int noChangeCount = 0;
@@ -348,15 +310,15 @@ namespace PrisApi.Services.Scrapers
                     await Task.Delay(500);
 
                     previousHeight = currentHeight;
-                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products scraped: {products.Count}");
+                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Height: {currentHeight}");
                 }
 
                 Console.WriteLine($"Total products scraped: {products.Count}");
 
                 if (apiResponses.Count > 0)
                 {
-                    File.WriteAllText("api_willys_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_willys_responses_debug.json for debugging");
+                    File.WriteAllText("api_hemkop_responses_debug.json", string.Join("\n---\n", apiResponses));
+                    Console.WriteLine("API responses saved to api_hemkop_responses_debug.json for debugging");
                 }
 
                 return products;

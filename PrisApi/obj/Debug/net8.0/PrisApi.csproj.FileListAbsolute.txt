@@ -380,3 +380,5 @@ C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\obj\Debug\net8.0\PrisApi.source
 C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\bin\Debug\net8.0\api_responses_debug.json
 C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\bin\Debug\net8.0\api_willys_responses_debug.json
 C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\bin\Debug\net8.0\api_coop_responses_debug.json
+C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\bin\Debug\net8.0\api_citygross_responses_debug.json
+C:\Users\nikke\OneDrive\Dokument\PrisApi\PrisApi\bin\Debug\net8.0\api_hemkop_responses_debug.json

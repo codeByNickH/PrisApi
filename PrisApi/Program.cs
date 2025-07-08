@@ -1,5 +1,7 @@
 using PrisApi.Services.Scrapers;
 using PrisApi.Services;
+using PrisApi.Helper.IHelper;
+using PrisApi.Helper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,7 @@ builder.Services.AddControllers();
 builder.Services.AddTransient<WillysScrapeService>();
 builder.Services.AddTransient<IcaScrapeService>();
 builder.Services.AddScoped<ScraperService>();
+builder.Services.AddScoped<IScrapeHelper, ScrapeHelper>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

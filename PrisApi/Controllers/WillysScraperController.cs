@@ -5,52 +5,50 @@ namespace PrisApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class IcaScraperController : ControllerBase
+    public class WillysScraperController : ControllerBase
     {
-        private readonly ScraperService _scraperService;
-        private readonly ILogger<IcaScraperController> _logger;
+        private readonly ScraperService _scrapingService;
+        private readonly ILogger<WillysScraperController> _logger;
+        // Change to enum or seperate file? 
         private readonly List<string> category = [
-            "Kött, Chark & Fågel",
-            "Mejeri & Ost",
-            "Frukt & Grönt",
-            "Fisk & Skaldjur",
-            "Bröd & Kakor",
-            "Vegetariskt",
-            "Färdigmat",
-            "Barn",
-            "Glass, Godis & Snacks",
-            "Dryck",
-            "Skafferi",
-            "Fyst",
-            "Tobak",
-            "Städ, Tvätt & Papper",
-            "Kök",
-            "Apotek, Skönhet & Hälsa",
-            "Träning & Återhämtning",
-            "Djur",
-            "Blommor & Trädgård",
-            ];
-        private readonly List<(int zip, string city)> Zipcode = [
-            (82391, "Bollnäs"),
-            (0, "Gävle"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
+            "/sortiment/kott-chark-och-fagel",
+            "/sortiment/mejeri-ost-och-agg",
+            "/sortiment/frukt-och-gront",
+            "/sortiment/skafferi",
+            "/sortiment/fryst",
+            "/sortiment/brod-och-kakor",
+            "/sortiment/fisk-och-skaldjur",
+            "/sortiment/vegetariskt",
+            "/sortiment/glass-godis-och-snacks",
+            "/sortiment/dryck",
+            "/sortiment/fardigmat",
+            "/sortiment/barn",
+            "/sortiment/blommor-och-tradgard",
+            "/sortiment/hem-och-stad",
+            "/sortiment/halsa-och-skonhet",
+            "/sortiment/apotek",
+            "/sortiment/djur",
+            "/sortiment/tobak",
+            "/sortiment/kiosk"
         ];
-        public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger)
+        private readonly List<(int zip, string city)> Zipcode = [
+            (82130, "Bollnäs"),
+            (0, "Gävle"),
+            (0, "Uppsala"),
+            (0, "Stockholm, -")
+        ];
+        public WillysScraperController(ScraperService scrapingService, ILogger<WillysScraperController> logger)
         {
-            _scraperService = scraperService;
+            _scrapingService = scrapingService;
             _logger = logger;
         }
-        [HttpPost("IcaOffers")] // Add location on this
-        public async Task<IActionResult> ScrapeIcaOffers()
-        {
-            _logger.LogInformation("Manual scraping of Ica offers initiated");
 
-            var job = await _scraperService.ScrapeIcaOffersAsync();
+        [HttpPost("WillysOffers")]
+        public async Task<IActionResult> ScrapeWillysOffers()
+        {
+            _logger.LogInformation("Manual scrape of Willys initiated");
+
+            var job = await _scrapingService.ScrapeWillysOffersAsync(Zipcode[0].zip);
 
             return Ok(new
             {
@@ -63,12 +61,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaMeat")]
-        public async Task<IActionResult> ScrapeIcaMeat()
+        [HttpPost("WillysMeat")]
+        public async Task<IActionResult> ScrapeWillysMeat()
         {
-            _logger.LogInformation("Manual scraping of Ica meat initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[0], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[0], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -81,12 +79,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaDariy")]
-        public async Task<IActionResult> ScrapeIcaDariy()
+        [HttpPost("WillysDariy")]
+        public async Task<IActionResult> ScrapeWillysDariy()
         {
-            _logger.LogInformation("Manual scraping of Ica dariy initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[1], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[1], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -99,12 +97,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaFruit")]
-        public async Task<IActionResult> ScrapeIcaFruit()
+        [HttpPost("WillysFruit")]
+        public async Task<IActionResult> ScrapeWillysFruit()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[2], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[2], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -117,12 +115,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaFish")]
-        public async Task<IActionResult> ScrapeIcaFish()
+        [HttpPost("WillysPantry")]
+        public async Task<IActionResult> ScrapeWillysPantry()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[3], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[3], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -135,12 +133,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaBread")]
-        public async Task<IActionResult> ScrapeIcaBread()
+        [HttpPost("WillysFrozen")]
+        public async Task<IActionResult> ScrapeWillysFrozen()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[4], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[4], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -153,12 +151,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaVeg")]
-        public async Task<IActionResult> ScrapeIcaVeg()
+        [HttpPost("WillysBread")]
+        public async Task<IActionResult> ScrapeWillysBread()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[5], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[5], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -171,12 +169,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaPrePackagedMeal")]
-        public async Task<IActionResult> ScrapeIcaPrePackagedMeal()
+        [HttpPost("WillysFish")]
+        public async Task<IActionResult> ScrapeWillysFish()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[6], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[6], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -189,12 +187,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaKids")]
-        public async Task<IActionResult> ScrapeIcaKids()
+        [HttpPost("WillysVege")]
+        public async Task<IActionResult> ScrapeWillysVege()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[7], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[7], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -207,12 +205,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaSnacks")]
-        public async Task<IActionResult> ScrapeIcaSnacks()
+        [HttpPost("WillysSnacks")]
+        public async Task<IActionResult> ScrapeWillysSnacks()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[8], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[8], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -225,12 +223,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaDrinks")]
-        public async Task<IActionResult> ScrapeIcaDrinks()
+        [HttpPost("WillysDrinks")]
+        public async Task<IActionResult> ScrapeWillysDrinks()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[9], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[9], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -243,12 +241,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaPantry")]
-        public async Task<IActionResult> ScrapeIcaPantry()
+        [HttpPost("WillysPrePackageMeal")]
+        public async Task<IActionResult> ScrapeWillysPrePackageMeal()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[10], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[10], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -261,12 +259,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaFrozen")]
-        public async Task<IActionResult> ScrapeIcaFrozen()
+        [HttpPost("WillysKids")]
+        public async Task<IActionResult> ScrapeWillysKids()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[11], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[11], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -279,12 +277,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaTobak")]
-        public async Task<IActionResult> ScrapeIcaTobak()
+        [HttpPost("WillysGarden")]
+        public async Task<IActionResult> ScrapeWillysGarden()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[12], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[12], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -297,12 +295,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaCleaning")]
-        public async Task<IActionResult> ScrapeIcaCleaning()
+        [HttpPost("WillysCleaning")]
+        public async Task<IActionResult> ScrapeWillysCleaning()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[13], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[13], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -315,12 +313,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaKitchen")]
-        public async Task<IActionResult> ScrapeIcaKitchen()
+        [HttpPost("WillysHealth")]
+        public async Task<IActionResult> ScrapeWillysHealth()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[14], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[14], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -333,12 +331,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaPharmacy")]
-        public async Task<IActionResult> ScrapeIcaPharmacy()
+        [HttpPost("WillysPharmacy")]
+        public async Task<IActionResult> ScrapeWillysPharmacy()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[15], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[15], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -351,12 +349,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaTraining")]
-        public async Task<IActionResult> ScrapeIcaTraining()
+        [HttpPost("WillysAnimal")]
+        public async Task<IActionResult> ScrapeWillysAnimal()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[16], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[16], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -369,12 +367,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaAnimal")]
-        public async Task<IActionResult> ScrapeIcaAnimal()
+        [HttpPost("WillysTobak")]
+        public async Task<IActionResult> ScrapeWillysTobak()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[17], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[17], Zipcode[0].zip);
 
             return Ok(new
             {
@@ -387,12 +385,12 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaGarden")]
-        public async Task<IActionResult> ScrapeIcaGarden()
+        [HttpPost("WillysKiosk")]
+        public async Task<IActionResult> ScrapeWillysKiosk()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scrape of Willys initiated");
 
-            var job = await _scraperService.ScrapeIcaAsync(category[18], Zipcode[0].zip);
+            var job = await _scrapingService.ScrapeWillysAsync(category[18], Zipcode[0].zip);
 
             return Ok(new
             {
