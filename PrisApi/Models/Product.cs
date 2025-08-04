@@ -20,6 +20,9 @@ namespace PrisApi.Models
         [Column(TypeName = "decimal(10, 2)")]
         public decimal? OriginalPrice { get; set; }
         
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal? JmfPrice { get; set; }
+        [Column(TypeName = "decimal(10, 2)")]
         public decimal DiscountPercentage { get; set; }
         public bool MemberDiscount { get; set; }
         
@@ -28,9 +31,12 @@ namespace PrisApi.Models
         
         [MaxLength(20)]
         public string Unit { get; set; }
+        [Column(TypeName = "decimal(10, 2)")]
+        public decimal Size { get; set; }
         
         public string ImageUrl { get; set; }
         public string MaxQuantity { get; set; }
+        public string MinQuantity { get; set; }
         
         [Required]
         public string StoreId { get; set; }

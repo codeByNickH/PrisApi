@@ -9,6 +9,7 @@ namespace PrisApi.Controllers
     {
         private readonly ScraperService _scrapingService;
         private readonly ILogger<HemkopScraperController> _logger;
+        // 822 31, "Alfta"
         private readonly List<string> category = [
             "sortiment/kott-fagel-och-chark",
             "sortiment/mejeri-ost-och-agg",
@@ -38,9 +39,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopMeat")]
         public async Task<IActionResult> ScrapeHemkopMeat()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop meat initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[0]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[0], 82231);
 
             return Ok(new
             {
@@ -56,9 +57,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopDairy")]
         public async Task<IActionResult> ScrapeHemkopDairy()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop dairy initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[1]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[1], 82231);
 
             return Ok(new
             {
@@ -74,9 +75,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopFruit")]
         public async Task<IActionResult> ScrapeHemkopFruit()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop fruit initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[2]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[2], 82231);
 
             return Ok(new
             {
@@ -92,9 +93,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopPantry")]
         public async Task<IActionResult> ScrapeHemkopPantry()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop pantry initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[3]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[3], 82231);
 
             return Ok(new
             {
@@ -110,9 +111,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopFrozen")]
         public async Task<IActionResult> ScrapeHemkopFrozen()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop frozen initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[4]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[4], 82231);
 
             return Ok(new
             {
@@ -128,9 +129,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopBread")]
         public async Task<IActionResult> ScrapeHemkopBread()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop bread initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[5]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[5], 82231);
 
             return Ok(new
             {
@@ -146,9 +147,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopFish")]
         public async Task<IActionResult> ScrapeHemkopFish()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop fish initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[6]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[6], 82231);
 
             return Ok(new
             {
@@ -164,9 +165,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopVege")]
         public async Task<IActionResult> ScrapeHemkopVege()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop vege initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[7]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[7], 82231);
 
             return Ok(new
             {
@@ -182,9 +183,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopSnacks")]
         public async Task<IActionResult> ScrapeHemkopSnacks()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop snacks initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[8]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[8], 82231);
 
             return Ok(new
             {
@@ -200,9 +201,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopDrinks")]
         public async Task<IActionResult> ScrapeHemkopDrinks()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop drinks initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[9]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[9], 82231);
 
             return Ok(new
             {
@@ -218,9 +219,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopPrePackagedMeal")]
         public async Task<IActionResult> ScrapeHemkopPrePackagedMeal()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop prepackage initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[10]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[10], 82231);
 
             return Ok(new
             {
@@ -236,9 +237,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopKids")]
         public async Task<IActionResult> ScrapeHemkopKids()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop kids initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[11]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[11], 82231);
 
             return Ok(new
             {
@@ -254,9 +255,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopGarden")]
         public async Task<IActionResult> ScrapeHemkopGarden()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop garden initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[12]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[12], 82231);
 
             return Ok(new
             {
@@ -272,9 +273,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopHome")]
         public async Task<IActionResult> ScrapeHemkopHome()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop home initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[13]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[13], 82231);
 
             return Ok(new
             {
@@ -290,9 +291,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopHealth")]
         public async Task<IActionResult> ScrapeHemkopHealth()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop health initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[14]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[14], 82231);
 
             return Ok(new
             {
@@ -308,9 +309,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopPharmacy")]
         public async Task<IActionResult> ScrapeHemkopPharmacy()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop pharmacy initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[15]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[15], 82231);
 
             return Ok(new
             {
@@ -326,9 +327,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopAnimal")]
         public async Task<IActionResult> ScrapeHemkopAnimal()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop animal initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[16]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[16], 82231);
 
             return Ok(new
             {
@@ -344,9 +345,9 @@ namespace PrisApi.Controllers
         [HttpPost("HemkopTobak")]
         public async Task<IActionResult> ScrapeHemkopTobak()
         {
-            _logger.LogInformation("Manual scrape of Hemkop initiated");
+            _logger.LogInformation("Manual scrape of Hemkop tobak initiated");
 
-            var job = await _scrapingService.ScrapeHemkopAsync(category[17]);
+            var job = await _scrapingService.ScrapeHemkopAsync(category[17], 82231);
 
             return Ok(new
             {

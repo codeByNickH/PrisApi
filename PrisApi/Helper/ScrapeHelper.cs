@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using PrisApi.Helper.IHelper;
 using PrisApi.Models.Scraping;
 
@@ -163,7 +164,6 @@ namespace PrisApi.Helper
             return matchCount >= 2;
         }
 
-        // Add Regex
         public async Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeId) // Make one for each store and make call in FromJson() with switch on storeid?
         {
             var product = new ScrapedProduct
@@ -179,57 +179,85 @@ namespace PrisApi.Helper
                     case "ica":
                         product.RawName = GetStringProperty(element, "name", "productName", "title", "displayName");
                         product.RawBrand = GetStringProperty(element, "brand", "brandName", "manufacturer");
-
-                        string priceStr = null;
-                        string priceJmfStr = null;
+                        if (element.TryGetProperty("size", out var size) && size.ValueKind == JsonValueKind.Object)
+                        {
+                            product.Size = ParseDecimal(Regex.Replace(GetStringProperty(size, "value"), "[a-zA-Z]", ""));
+                        }
+                        if (element.TryGetProperty("packSizeDescription", out var sizeDesc) && sizeDesc.ValueKind == JsonValueKind.String && !sizeDesc.ToString().Contains("-") && product.Size == 0)
+                        {
+                            product.Size = ParseDecimal(Regex.Replace(sizeDesc.ToString(), "[a-zA-Z]", ""));
+                        }
+                        decimal icaOriginalPrice = 0m;
+                        decimal icaOriginalJmfPrice = 0m;
+                        decimal icaCurrentPrice = 0m;
+                        decimal icaCurrentJmfPrice = 0m;
+                        string unitDisplay = null;
                         if (element.TryGetProperty("price", out var price) && price.ValueKind == JsonValueKind.Object)
                         {
-                            priceStr = GetStringProperty(price, "amount");
-                            if (string.IsNullOrEmpty(priceStr))
+                            if (price.TryGetProperty("original", out var original) && original.ValueKind == JsonValueKind.Object)
                             {
-                                if (price.TryGetProperty("current", out var current) && current.ValueKind == JsonValueKind.Object)
+                                icaOriginalPrice = ParseDecimal(GetStringProperty(original, "amount"));
+                            }
+                            if (price.TryGetProperty("current", out var current) && current.ValueKind == JsonValueKind.Object)
+                            {
+                                icaCurrentPrice = ParseDecimal(GetStringProperty(current, "amount"));
+                            }
+                            if (price.TryGetProperty("unit", out var unit) && unit.ValueKind == JsonValueKind.Object)
+                            {
+                                unitDisplay = GetStringProperty(unit, "label")
+                                    .Replace("without.liquid", " utan spad")
+                                    .Replace("litre.without.deposit", "LTR")
+                                    .Replace("fop.price.per.", "")
+                                    .Replace("each", "st");
+                                if (unit.TryGetProperty("original", out var originalUnit) && originalUnit.ValueKind == JsonValueKind.Object)
                                 {
-                                    priceStr = GetStringProperty(current, "amount");
+                                    icaOriginalJmfPrice = ParseDecimal(GetStringProperty(originalUnit, "amount"));
                                 }
-                                if (price.TryGetProperty("unit", out var unit) && unit.ValueKind == JsonValueKind.Object)
+                                if (unit.TryGetProperty("current", out var currentUnit) && currentUnit.ValueKind == JsonValueKind.Object)
                                 {
-                                    if (unit.TryGetProperty("current", out var currentUnit) && currentUnit.ValueKind == JsonValueKind.Object)
+                                    icaCurrentJmfPrice = ParseDecimal(GetStringProperty(currentUnit, "amount"));
+                                }
+                            }
+                            if (icaOriginalPrice != 0)
+                            {
+                                product.RawOrdPrice = icaOriginalPrice;
+                                product.OrdJmfPrice = icaOriginalJmfPrice;
+                                product.RawDiscountPrice = icaCurrentPrice;
+                                product.DiscountJmfPrice = icaCurrentJmfPrice;
+                            }
+                            else if (icaCurrentPrice != 0)
+                            {
+                                product.RawOrdPrice = icaCurrentPrice;
+                                product.OrdJmfPrice = icaCurrentJmfPrice;
+                            }
+                            else
+                            {
+                                product.RawOrdPrice = ParseDecimal(GetStringProperty(price, "amount"));
+                                if (element.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Object)
+                                {
+                                    unitDisplay = GetStringProperty(unitPrice, "unit")
+                                        .Replace("without.liquid", " utan spad")
+                                        .Replace("litre.without.deposit", "LTR")
+                                        .Replace("fop.price.per.", "")
+                                        .Replace("each", "st");
+                                    if (unitPrice.TryGetProperty("price", out var priceInnerObj) && priceInnerObj.ValueKind == JsonValueKind.Object)
                                     {
-                                        priceJmfStr = GetStringProperty(currentUnit, "amount");
+                                        product.OrdJmfPrice = ParseDecimal(GetStringProperty(priceInnerObj, "amount"));
                                     }
                                 }
                             }
                         }
 
-                        string unitStr = null;
-                        string unitPriceStr = null;
-                        string unitDisplay = null;
-                        if (element.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Object)
+                        if (element.TryGetProperty("catchweight", out var weight) && weight.ValueKind == JsonValueKind.Object)
                         {
-                            unitStr = GetStringProperty(unitPrice, "unit");
-                            if (unitPrice.TryGetProperty("price", out var priceInnerObj) && priceInnerObj.ValueKind == JsonValueKind.Object)
+                            if (weight.TryGetProperty("typicalQuantity", out var quantity) && quantity.ValueKind == JsonValueKind.Object)
                             {
-                                unitPriceStr = GetStringProperty(priceInnerObj, "amount");
-                            }
-                        }
-
-                        // "catchweight": {
-                        // "typicalQuantity": {
-                        //     "value": "0.925",
-                        //     "uom": "KG"
-                        // },
-
-                        if (!string.IsNullOrEmpty(priceStr))
-                        {
-                            product.RawOrdPrice = priceStr;
-                            if (!string.IsNullOrEmpty(priceJmfStr))
-                            {
-                                product.OrdJmfPrice = priceJmfStr;
-                            }
-                            if (!string.IsNullOrEmpty(unitPriceStr) && !string.IsNullOrEmpty(unitStr))
-                            {
-                                unitDisplay = unitStr.Replace("without.liquid", " utan spad").Replace("litre.without.deposit", "L").Replace("fop.price.per.", "").Replace("each", "st");
-                                product.OrdJmfPrice = $"{unitPriceStr}kr/{unitDisplay}";
+                                product.Size = ParseDecimal(GetStringProperty(quantity, "value"));
+                                string ifGram = GetStringProperty(quantity, "uom");
+                                if (ifGram == "G" && product.Size > 9)
+                                {
+                                    product.Size /= 1000m;
+                                }
                             }
                         }
 
@@ -252,20 +280,16 @@ namespace PrisApi.Helper
 
                         if (!string.IsNullOrEmpty(promoPriceStr))
                         {
-                            product.RawDiscountPrice = promoPriceStr;
+                            product.RawDiscountPrice = ParseDecimal(promoPriceStr);
                             if (!string.IsNullOrEmpty(promoUnitPriceStr) && !string.IsNullOrEmpty(promoUnitStr))
                             {
-                                unitDisplay = promoUnitStr.Replace("without.liquid", " utan spad").Replace("litre.without.deposit", "L").Replace("fop.price.per.", "").Replace("each", "st");
-                                product.DiscountJmfPrice = $"{promoUnitPriceStr}kr/{unitDisplay}";
+                                product.DiscountJmfPrice = ParseDecimal(promoUnitPriceStr);
                             }
                         }
 
-                        if (!string.IsNullOrEmpty(priceStr) && !string.IsNullOrEmpty(promoPriceStr))
+                        if (product.RawOrdPrice != 0 && product.RawDiscountPrice != 0)
                         {
-                            decimal.TryParse(priceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal icaOrdPrice);
-                            decimal.TryParse(promoPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal discPrice);
-                            var saved = (icaOrdPrice - discPrice).ToString();
-                            product.RawDiscount = saved;
+                            product.RawDiscount = product.RawOrdPrice - product.RawDiscountPrice;
                             if (element.TryGetProperty("promotions", out var icaPromotions) && icaPromotions.ValueKind == JsonValueKind.Array && icaPromotions.GetArrayLength() > 0)
                             {
                                 var promoMaxQ = icaPromotions[0];
@@ -282,7 +306,7 @@ namespace PrisApi.Helper
                             }
                         }
 
-                        if (string.IsNullOrEmpty(promoPriceStr))   // Change to use Regex
+                        if (string.IsNullOrEmpty(promoPriceStr))
                         {
                             if (element.TryGetProperty("promotions", out var icaPromotions) && icaPromotions.ValueKind == JsonValueKind.Array && icaPromotions.GetArrayLength() > 0)
                             {
@@ -299,16 +323,16 @@ namespace PrisApi.Helper
                                 }
                                 if (promoPriceStr.Contains("för"))
                                 {
-                                    decimal.TryParse(priceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal icaOrdPrice);
                                     var parts = promoPriceStr.Split(" ", 4);
-                                    var j = Int32.Parse(parts[0]);
-                                    var i = Int32.Parse(parts[2]);
-                                    var saved = i / j;
-                                    product.RawDiscount = (icaOrdPrice - saved).ToString();
-                                    unitDisplay = "kr/st";
+                                    var j = ParseDecimal(parts[0]);
+                                    var i = ParseDecimal(parts[2]);
+                                    product.RawDiscountPrice = Math.Round(i / j, 2);
+                                    product.MinQuantity = $"{j} för";
+                                    product.RawDiscount = product.RawOrdPrice - product.RawDiscountPrice;
+                                    product.TotalPrice = i;
+                                    product.DiscountJmfPrice = Math.Round(product.RawDiscountPrice / product.Size, 2);
                                 }
-                                var value = promoPriceStr.Split("-- ", 2);
-                                product.RawDiscountPrice = value[0];
+                                product.DiscountPer = Math.Round(product.OrdJmfPrice - product.DiscountJmfPrice, 2);
                             }
                             else if (element.TryGetProperty("offer", out var offer) && offer.ValueKind == JsonValueKind.Object)
                             {
@@ -324,16 +348,17 @@ namespace PrisApi.Helper
                                 }
                                 if (promoPriceStr.Contains("för"))
                                 {
-                                    decimal.TryParse(priceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal icaOrdPrice);
                                     var parts = promoPriceStr.Split(" ", 4);
-                                    var j = Int32.Parse(parts[0]);
-                                    var i = Int32.Parse(parts[2]);
-                                    var saved = i / j;
-                                    product.RawDiscount = (icaOrdPrice - saved).ToString(); //
-                                    unitDisplay = "kr/st";
+                                    var j = ParseDecimal(parts[0]);
+                                    var i = ParseDecimal(parts[2]);
+                                    product.RawDiscountPrice = Math.Round(i / j, 2);
+                                    product.MinQuantity = $"{j} för";
+                                    product.RawDiscount = product.RawOrdPrice - product.RawDiscountPrice;
+                                    product.TotalPrice = i;
+                                    product.DiscountJmfPrice = Math.Round(product.RawDiscountPrice / product.Size, 2);
                                 }
-                                var value = promoPriceStr.Split("-- ", 2);
-                                product.RawDiscountPrice = value[0];
+
+                                product.DiscountPer = Math.Round(product.OrdJmfPrice - product.DiscountJmfPrice, 2);
                             }
                         }
                         product.RawUnit = unitDisplay;
@@ -346,23 +371,23 @@ namespace PrisApi.Helper
 
                         product.RawName = GetStringProperty(element, "name");
                         product.RawBrand = GetStringProperty(element, "manufacturerName");
-                        product.RawUnit = GetStringProperty(element, "packageSizeInformation");
+                        product.Size = ParseDecimal(GetStringProperty(element, "packageSize")) / 1000m;
 
                         if (element.TryGetProperty("image", out var imageObj) && imageObj.ValueKind == JsonValueKind.Object)
                         {
                             product.ImageSrc = GetStringProperty(imageObj, "url");
                         }
 
-                        var coopOrdPrice = GetNumProperty(element, "piecePrice");
-                        product.RawOrdPrice = coopOrdPrice.ToString();
+                        product.RawOrdPrice = ParseDecimal(GetStringProperty(element, "piecePrice"));
 
-                        product.RawDiscountPrice = GetStringProperty(element, "promotionPrice");
+                        var coopDiscPrice = GetStringProperty(element, "promotionPrice");
 
-                        var coopOrdComparePrice = GetNumProperty(element, "comparativePrice");
-                        var coopComparePriceUnit = GetStringProperty(element, "comparativePriceText");
+                        var coopOrdComparePrice = GetStringProperty(element, "comparativePrice");
+                        var coopComparePriceUnit = GetStringProperty(element, "comparativePriceText").Replace("kr/", "");
+                        product.RawUnit = coopComparePriceUnit;
                         if (!string.IsNullOrEmpty(coopOrdComparePrice.ToString()) && !string.IsNullOrEmpty(coopComparePriceUnit))
                         {
-                            product.OrdJmfPrice = coopOrdComparePrice.ToString();
+                            product.OrdJmfPrice = ParseDecimal(coopOrdComparePrice);
                         }
 
                         if (element.TryGetProperty("onlinePromotions", out var coopPromotions) &&
@@ -371,46 +396,43 @@ namespace PrisApi.Helper
                         {
                             var firstPromo = coopPromotions[0];
 
-                            if (string.IsNullOrEmpty(product.RawDiscountPrice))
+                            if (string.IsNullOrEmpty(coopDiscPrice))
                             {
-                                product.RawDiscountPrice = GetStringProperty(firstPromo, "price");
+                                product.RawDiscountPrice = ParseDecimal(GetStringProperty(firstPromo, "price"));
+                            }
+                            else
+                            {
+                                product.RawDiscountPrice = ParseDecimal(coopDiscPrice);
                             }
 
                             if (firstPromo.TryGetProperty("comparativePrice", out var discJmfPrice) &&
                                 discJmfPrice.ValueKind == JsonValueKind.Object)
                             {
-                                product.DiscountJmfPrice = GetStringProperty(discJmfPrice, "b2cPrice");
+                                product.DiscountJmfPrice = ParseDecimal(GetStringProperty(discJmfPrice, "b2cPrice"));
                             }
 
                             var requiredAmount = GetStringProperty(firstPromo, "numberOfProductRequired");
 
-                            double.TryParse(product.OrdJmfPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var ordJmf);
-                            double.TryParse(product.DiscountJmfPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var discJmf);
-                            double savingsPer = (double)coopOrdComparePrice - discJmf;
-                            product.DiscountPer = $"spar ca: {Math.Round(savingsPer, 2)}{coopComparePriceUnit}";
+                            decimal savingsPer = product.OrdJmfPrice - product.DiscountJmfPrice;
+                            product.DiscountPer = Math.Round(savingsPer, 2);
 
-                            double savings;
                             if (string.IsNullOrEmpty(requiredAmount))
                             {
-                                double.TryParse(product.RawOrdPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var a);
-                                double.TryParse(product.RawDiscountPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out var b);
-                                savings = (double)(coopOrdPrice - b);
-                                product.RawDiscount = $"spar ca: {Math.Round(savings, 2)}kr/st";
+                                product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
                             }
                             else if (!string.IsNullOrEmpty(requiredAmount))
                             {
-                                double.TryParse(product.RawDiscountPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out double a);
-                                double.TryParse(requiredAmount, out double i);
-                                var pricePer = a / i;
-                                double.TryParse(product.RawOrdPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out double b);
-                                savings = (double)((coopOrdPrice - pricePer) / i);
-                                product.RawDiscount = $"spar ca: {Math.Round(savings, 2)}kr/st";
+                                int.TryParse(requiredAmount, out int i);
+                                product.RawDiscountPrice = Math.Round(product.RawDiscountPrice / i, 2);
+                                product.MinQuantity = $"{i} för";
+                                product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
+                                product.TotalPrice = ParseDecimal(GetStringProperty(firstPromo, "price"));
                             }
 
                             if (firstPromo.TryGetProperty("maxNumberOfUseWithUnit", out var redeemLimit) &&
                                 redeemLimit.ValueKind == JsonValueKind.Object)
                             {
-                                product.MaxQuantity = $"Max {GetStringProperty(redeemLimit, "value")} per hushåll";
+                                product.MaxQuantity = $"Max {GetStringProperty(redeemLimit, "value")}/hushåll";
                             }
 
                             var campaignType = GetStringProperty(firstPromo, "medMeraRequired");
@@ -419,15 +441,6 @@ namespace PrisApi.Helper
                                 product.MemberDiscount = true;
                             }
                         }
-
-                        product.RawOrdPrice += "kr/st";
-                        product.RawDiscountPrice += "kr/st";
-
-                        if (!string.IsNullOrEmpty(product.OrdJmfPrice))
-                            product.OrdJmfPrice += coopComparePriceUnit;
-
-                        if (!string.IsNullOrEmpty(product.DiscountJmfPrice))
-                            product.DiscountJmfPrice += coopComparePriceUnit;
 
                         if (string.IsNullOrEmpty(product.MaxQuantity))
                         {
@@ -441,21 +454,21 @@ namespace PrisApi.Helper
 
                         product.RawName = GetStringProperty(element, "name");
                         product.RawBrand = GetStringProperty(element, "manufacturer");
-                        product.RawUnit = GetStringProperty(element, "displayVolume");
+                        product.Size = ParseDecimal(Regex.Replace(GetStringProperty(element, "displayVolume"), "[^0-9 .]", ""));
+                        if (product.Size > 9)
+                        {
+                            product.Size /= 1000m;
+                        }
 
                         if (element.TryGetProperty("image", out var hemkopImageObj) && hemkopImageObj.ValueKind == JsonValueKind.Object)
                         {
                             product.ImageSrc = GetStringProperty(hemkopImageObj, "url");
                         }
 
-                        product.RawOrdPrice = GetStringProperty(element, "priceNoUnit"); // chage to priceValue and GetNumProp()
+                        product.RawOrdPrice = ParseDecimal(GetStringProperty(element, "priceValue"));
 
-                        var hemkopOrdComparePrice = GetStringProperty(element, "comparePrice");
-                        var hemkopComparePriceUnit = GetStringProperty(element, "comparePriceUnit");
-                        if (!string.IsNullOrEmpty(hemkopOrdComparePrice) && !string.IsNullOrEmpty(hemkopComparePriceUnit))
-                        {
-                            product.OrdJmfPrice = $"{hemkopOrdComparePrice}/{hemkopComparePriceUnit}";
-                        }
+                        product.OrdJmfPrice = decimal.Parse(Regex.Replace(GetStringProperty(element, "comparePrice"), "[a-zA-Z /]", ""));
+                        product.RawUnit = GetStringProperty(element, "comparePriceUnit");
 
                         if (element.TryGetProperty("potentialPromotions", out var hemkopPromotions) &&
                             hemkopPromotions.ValueKind == JsonValueKind.Array &&
@@ -466,43 +479,39 @@ namespace PrisApi.Helper
                             if (firstPromo.TryGetProperty("price", out var hemkopPromoPrice) &&
                                 hemkopPromoPrice.ValueKind == JsonValueKind.Object)
                             {
-                                product.RawDiscountPrice = GetStringProperty(hemkopPromoPrice, "formattedValue");
-                                // Add qualifyingCount somewhere if count > 0
+                                product.RawDiscountPrice = ParseDecimal(GetStringProperty(hemkopPromoPrice, "value"));
                             }
 
-                            product.DiscountJmfPrice = GetStringProperty(firstPromo, "comparePrice");
+                            product.DiscountJmfPrice = decimal.Parse(Regex.Replace(GetStringProperty(firstPromo, "comparePrice"), "[a-zA-Z /]", ""));
+                            product.DiscountPer = Math.Round(product.OrdJmfPrice - product.DiscountJmfPrice, 2);
 
-                            var conditionLabel = GetStringProperty(firstPromo, "conditionLabel");
-                            var rewardLabel = GetStringProperty(firstPromo, "rewardLabel");
+                            string conditionLabel = GetStringProperty(firstPromo, "conditionLabel");
+                            decimal totalPrice = ParseDecimal(Regex.Replace(GetStringProperty(firstPromo, "rewardLabel"), "[a-zA-Z /]", ""));
+                            decimal savings = ParseDecimal(GetStringProperty(element, "savingsAmount"));
 
-                            if (!string.IsNullOrEmpty(conditionLabel) && !conditionLabel.Contains("för"))
+
+                            if (conditionLabel.Contains("för"))
                             {
-                                product.RawDiscount = conditionLabel;
+                                product.RawDiscount = savings;
+                                product.MinQuantity = conditionLabel;
+                                product.TotalPrice = totalPrice;
                             }
-                            else if (!string.IsNullOrEmpty(rewardLabel) && !string.IsNullOrEmpty(conditionLabel) && conditionLabel.Contains("för"))
+                            else
                             {
-                                string pricePer = $"{conditionLabel} {rewardLabel}";
-                                var savings = GetStringProperty(element, "savingsAmount").ToString();
-                                product.RawDiscount = $"{pricePer}, save: {savings}0";
+                                product.RawDiscount = savings;
                             }
 
-                            var redeemLimit = GetStringProperty(firstPromo, "redeemLimitLabel");
+                            string redeemLimit = GetStringProperty(firstPromo, "redeemLimitLabel");
                             if (!string.IsNullOrEmpty(redeemLimit))
                             {
                                 product.MaxQuantity = redeemLimit;
                             }
 
-                            var campaignType = GetStringProperty(firstPromo, "campaignType");
-                            if (campaignType == "LOYALTY")
+                            string campaignType = GetStringProperty(firstPromo, "campaignType");
+                            if (campaignType.ToLower() == "loyalty")
                             {
                                 product.MemberDiscount = true;
                             }
-                        }
-
-                        var hemkopPriceUnit = GetStringProperty(element, "priceUnit");
-                        if (!string.IsNullOrEmpty(hemkopPriceUnit) && !product.RawOrdPrice.Contains(hemkopPriceUnit))
-                        {
-                            product.RawOrdPrice += $" {hemkopPriceUnit}";
                         }
 
                         if (string.IsNullOrEmpty(product.RawBrand))
@@ -530,20 +539,48 @@ namespace PrisApi.Helper
 
                         product.RawName = GetStringProperty(element, "name");
                         product.RawBrand = GetStringProperty(element, "manufacturer");
-                        product.RawUnit = GetStringProperty(element, "displayVolume");
+                        product.RawUnit = GetStringProperty(element, "comparePriceUnit").Replace("kr/", "");
+
+                        if (GetStringProperty(element, "depositPrice") != "")
+                        {
+                            byte.TryParse(Regex.Replace(GetStringProperty(element, "depositPrice"), "[^0-9 .]", ""), out byte deposit);
+                            product.DepositPrice = deposit;
+                        }
+                        string displayVolume = GetStringProperty(element, "displayVolume");
+                        if (displayVolume.Contains('p') || displayVolume.Contains('x'))
+                        {
+                            string[] checkedForPack = displayVolume.Split("p", 2).Length > 1 ? displayVolume.Split("p", 2) : displayVolume.Split("x", 2);                             // Add Pack for Drinks
+                            product.Size = !string.IsNullOrEmpty(checkedForPack[1]) ? decimal.Parse(Regex.Replace(checkedForPack[1], "[a-zA-Z /]", "")) : 0;
+                        }
+                        else if (displayVolume.Contains("l/"))
+                        {
+                            string[] checkedForMixingDrink = displayVolume.Split("/", 2);
+                            product.Size = decimal.Parse(Regex.Replace(checkedForMixingDrink[0], "[a-zA-Z /]", ""));
+                        }
+                        else
+                        {
+                            decimal.TryParse(Regex.Replace(displayVolume, "[a-zA-Z /]", ""), out decimal litre);
+                            product.Size = litre != 0 ? litre : ParseDecimal(Regex.Replace(displayVolume, "[a-zA-Z /]", ""));
+                        }
+                        if (displayVolume.Contains("cl"))
+                        {
+                            product.Size /= 100m;
+                        }
+                        if (displayVolume.Contains('g') || displayVolume.Contains("ml"))
+                        {
+                            product.Size /= 1000m;
+                        }
 
                         if (element.TryGetProperty("image", out var willysImageObj) && willysImageObj.ValueKind == JsonValueKind.Object)
                         {
                             product.ImageSrc = GetStringProperty(willysImageObj, "url");
                         }
 
-                        product.RawOrdPrice = GetStringProperty(element, "priceNoUnit"); // chage to priceValue
-
-                        var willysOrdComparePrice = GetStringProperty(element, "comparePrice");
-                        var willysComparePriceUnit = GetStringProperty(element, "comparePriceUnit");
-                        if (!string.IsNullOrEmpty(willysOrdComparePrice) && !string.IsNullOrEmpty(willysComparePriceUnit))
+                        product.RawOrdPrice = ParseDecimal(GetStringProperty(element, "priceValue"));
+                        product.OrdJmfPrice = decimal.Parse(Regex.Replace(GetStringProperty(element, "comparePrice"), "[a-zA-z /]", ""));
+                        if (product.RawOrdPrice == product.OrdJmfPrice)
                         {
-                            product.OrdJmfPrice = $"{willysOrdComparePrice}/{willysComparePriceUnit}";
+                            product.RawOrdPrice = Math.Round(product.OrdJmfPrice * product.Size, 2);
                         }
 
                         if (element.TryGetProperty("potentialPromotions", out var wilysPromotions) &&
@@ -552,27 +589,37 @@ namespace PrisApi.Helper
                         {
                             var firstPromo = wilysPromotions[0];
 
+                            product.DiscountJmfPrice = decimal.Parse(Regex.Replace(GetStringProperty(firstPromo, "comparePrice"), "[a-zA-Z /]", ""));
+
                             if (firstPromo.TryGetProperty("price", out var willysPromoPrice) &&
                                 willysPromoPrice.ValueKind == JsonValueKind.Object)
                             {
-                                product.RawDiscountPrice = GetStringProperty(willysPromoPrice, "formattedValue");
-                                // Add qualifyingCount somewhere if count > 0
+                                product.RawDiscountPrice = ParseDecimal(GetStringProperty(willysPromoPrice, "value"));
+                                if (product.RawDiscountPrice == product.DiscountJmfPrice)
+                                {
+                                    product.RawDiscountPrice = Math.Round(product.DiscountJmfPrice * product.Size, 2);
+                                }
                             }
 
-                            product.DiscountJmfPrice = GetStringProperty(firstPromo, "comparePrice");
+                            string conditionLabel = GetStringProperty(firstPromo, "conditionLabelFormatted");
+                            decimal savings = Math.Round(ParseDecimal(GetStringProperty(element, "savingsAmount")), 2);
 
-                            var conditionLabel = GetStringProperty(firstPromo, "conditionLabel");
-                            var rewardLabel = GetStringProperty(firstPromo, "rewardLabel");
-
-                            if (!string.IsNullOrEmpty(conditionLabel) && !conditionLabel.Contains("för"))
+                            if (conditionLabel.Contains("för"))
                             {
-                                product.RawDiscount = conditionLabel;
+                                decimal totalPrice = decimal.Parse(Regex.Replace(GetStringProperty(firstPromo, "rewardLabel"), "[a-zA-Z /]", ""));
+                                product.RawDiscount = savings;
+                                product.MinQuantity = conditionLabel;
+                                product.TotalPrice = totalPrice;
+                                string[] minQint = conditionLabel.Split(" ", 2);
+                                product.RawDiscountPrice = Math.Round(product.TotalPrice / int.Parse(minQint[0]), 2);
                             }
-                            else if (!string.IsNullOrEmpty(rewardLabel) && !string.IsNullOrEmpty(conditionLabel) && conditionLabel.Contains("för"))
+                            else if (product.RawDiscount == 0 && savings > 0)
                             {
-                                string pricePer = $"{conditionLabel} {rewardLabel}";
-                                var savings = GetStringProperty(element, "savingsAmount").ToString();
-                                product.RawDiscount = $"{pricePer}, save: {savings}0";
+                                product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
+                            }
+                            if (product.DiscountPer == 0 && savings > 0)
+                            {
+                                product.DiscountPer = Math.Round(product.OrdJmfPrice - product.DiscountJmfPrice, 2);
                             }
 
                             var redeemLimit = GetStringProperty(firstPromo, "redeemLimitLabel");
@@ -586,12 +633,6 @@ namespace PrisApi.Helper
                             {
                                 product.MemberDiscount = true;
                             }
-                        }
-
-                        var willysPriceUnit = GetStringProperty(element, "priceUnit");
-                        if (!string.IsNullOrEmpty(willysPriceUnit) && !product.RawOrdPrice.Contains(willysPriceUnit))
-                        {
-                            product.RawOrdPrice += $" {willysPriceUnit}";
                         }
 
                         if (string.IsNullOrEmpty(product.RawBrand))
@@ -619,28 +660,30 @@ namespace PrisApi.Helper
 
                         product.RawName = GetStringProperty(element, "name");
                         product.RawBrand = GetStringProperty(element, "brand");
-                        product.RawUnit = GetStringProperty(element, "descriptiveSize");
+                        string descriptiveSize = GetStringProperty(element, "descriptiveSize");
 
                         if (element.TryGetProperty("image", out var citygrossImageObj) && citygrossImageObj.ValueKind == JsonValueKind.Object)
                         {
                             product.ImageSrc = GetStringProperty(citygrossImageObj, "url");
                         }
 
-                        // To get correct price per item there needs to be a check on weight
-                        // then calculate price per item. As of now the price is per kg on some items
-                        // which don't give the item price when the item is less or more then 1kg.
-
-                        // "netContent": {
-                        //     "unitOfMeasure": 0,
-                        //     "value": 900
-                        //      if value < 1000 make value 0.9-- else make value 1.--- 
-                        // },   multiply by price to get price per item on price per kg items.
                         decimal weightInKg = 0;
-                        if (element.TryGetProperty("netContent", out var weight) &&
-                            weight.ValueKind == JsonValueKind.Object)
+                        if (element.TryGetProperty("netContent", out var cityWeight) &&
+                            cityWeight.ValueKind == JsonValueKind.Object)
                         {
-                            decimal prodWeight = decimal.Parse(GetStringProperty(weight, "value"));
-                            weightInKg = prodWeight / 1000m;
+                            if (descriptiveSize.Contains("CL"))
+                            {
+                                product.Size = ParseDecimal(GetStringProperty(cityWeight, "value")) / 100000m;
+                            }
+                            else if (descriptiveSize.Contains("DL"))
+                            {
+                                product.Size = ParseDecimal(GetStringProperty(cityWeight, "value")) / 10000m;
+                            }
+                            else
+                            {
+                                product.Size = ParseDecimal(GetStringProperty(cityWeight, "value")) / 1000m;
+                            }
+                            weightInKg = product.Size;
                         }
                         if (element.TryGetProperty("productStoreDetails", out var details) &&
                             details.ValueKind == JsonValueKind.Object)
@@ -648,100 +691,70 @@ namespace PrisApi.Helper
                             if (details.TryGetProperty("prices", out var prices) &&
                                 prices.ValueKind == JsonValueKind.Object)
                             {
-                                string comparePriceUnit = null;
                                 if (prices.TryGetProperty("currentPrice", out var currentPrice) &&
                                     currentPrice.ValueKind == JsonValueKind.Object)
                                 {
-                                    string citygrossPriceStr = GetStringProperty(currentPrice, "price");
-                                    string compPriceStr = GetStringProperty(currentPrice, "comparativePrice");
-                                    decimal.TryParse(citygrossPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal citygrossPrice);
-                                    decimal.TryParse(compPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal ordComparePrice);
+                                    decimal citygrossPrice = ParseDecimal(GetStringProperty(currentPrice, "price"));
+                                    decimal ordComparePrice = ParseDecimal(GetStringProperty(currentPrice, "comparativePrice"));
                                     if (citygrossPrice != ordComparePrice)
                                     {
-                                        product.RawOrdPrice = citygrossPrice.ToString();
+                                        product.RawOrdPrice = citygrossPrice;
                                     }
                                     else
                                     {
-                                        decimal pricePerItem = Math.Round(weightInKg * ordComparePrice, 2);
-                                        product.RawOrdPrice = pricePerItem.ToString();
+                                        product.RawOrdPrice = Math.Round(weightInKg * ordComparePrice, 2);
                                     }
-                                    comparePriceUnit = GetStringProperty(currentPrice, "comparativePriceUnit").Replace("M", ""); // replace last letter
-                                    if (ordComparePrice != 0 && !string.IsNullOrEmpty(comparePriceUnit))
+                                    product.RawUnit = GetStringProperty(currentPrice, "comparativePriceUnit").Replace("M", "").ToLower();
+                                    if (ordComparePrice != 0)
                                     {
-                                        product.OrdJmfPrice = ordComparePrice.ToString();
+                                        product.OrdJmfPrice = ordComparePrice;
                                     }
                                 }
                                 if (prices.TryGetProperty("promotions", out var promotions) &&
                                     promotions.ValueKind == JsonValueKind.Array &&
                                     promotions.GetArrayLength() > 0)
                                 {
-                                    //  "promotions": [
-                                    //     {
-                                    //         "membersOnly": false,
-                                    //         "minQuantity": 1,
-                                    //         "value": 99.95,
-                                    //         "maxAppliedPerReceipt": 0,
-                                    //         "priceDetails": {
-                                    //             "price": 99.95,
-                                    //             "unit": "KGM",
-                                    //             "comparativePrice": 99.95,
-                                    //             "comparativePriceUnit": "KGM"
-                                    //         }
-                                    //     }
-                                    // ], 
                                     var firstPromo = promotions[0];
-
                                     if (firstPromo.TryGetProperty("priceDetails", out var citygrossPromoPrice) &&
                                         citygrossPromoPrice.ValueKind == JsonValueKind.Object)
                                     {
-                                        string citygrossPriceStr = GetStringProperty(citygrossPromoPrice, "price");
-                                        string compPriceStr = GetStringProperty(citygrossPromoPrice, "comparativePrice");
-                                        decimal.TryParse(citygrossPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal citygrossPrice);
-                                        decimal.TryParse(compPriceStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal ordComparePrice);
-                                        if (citygrossPrice != ordComparePrice)
+                                        decimal citygrossPrice = ParseDecimal(GetStringProperty(citygrossPromoPrice, "price"));
+                                        decimal discComparePrice = ParseDecimal(GetStringProperty(citygrossPromoPrice, "comparativePrice"));
+                                        if (citygrossPrice != discComparePrice)
                                         {
-                                            product.RawDiscountPrice = citygrossPrice.ToString();
+                                            product.RawDiscountPrice = citygrossPrice;
                                         }
                                         else
                                         {
-                                            decimal pricePerItem = Math.Round(weightInKg * ordComparePrice, 2);
-                                            product.RawDiscountPrice = pricePerItem.ToString();
+                                            product.RawDiscountPrice = Math.Round(weightInKg * discComparePrice, 2);
                                         }
-                                        // Add qualifyingCount somewhere if count > 0
-                                        product.DiscountJmfPrice = GetStringProperty(citygrossPromoPrice, "comparativePrice");
+                                        product.DiscountJmfPrice = discComparePrice;
                                     }
 
-                                    // minQuantity
-                                    // maxAppliedPerReceipt
+                                    decimal savingsPer = product.OrdJmfPrice - product.DiscountJmfPrice;
+                                    product.DiscountPer = Math.Round(savingsPer, 2);
 
-                                    decimal.TryParse(product.OrdJmfPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal ordJmf);
-                                    decimal.TryParse(product.DiscountJmfPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal discJmf);
-                                    decimal savingsPer = ordJmf - discJmf;
-                                    product.DiscountPer = $"spar ca: {Math.Round(savingsPer, 2)}{comparePriceUnit}";
-
-                                    decimal savings;
                                     var minQuantity = GetStringProperty(firstPromo, "minQuantity");
-                                    Int32.TryParse(minQuantity, out int minQint);
+                                    int.TryParse(minQuantity, out int minQint);
                                     if (!string.IsNullOrEmpty(minQuantity) && minQint == 1)
                                     {
-                                        decimal.TryParse(product.RawOrdPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal a);
-                                        decimal.TryParse(product.RawDiscountPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal b);
-                                        savings = b - b;
-                                        product.RawDiscount = $"spar ca: {Math.Round(savings, 2)}kr/st";
+                                        product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
                                     }
-                                    else if (minQint >= 2)
+                                    else if (!string.IsNullOrEmpty(minQuantity) && minQint > 1)
                                     {
-                                        decimal.TryParse(product.RawDiscountPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal a);
-                                        var pricePer = a / minQint;
-                                        decimal.TryParse(product.RawOrdPrice, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal b);
-                                        savings = (b - pricePer) / minQint;
-                                        product.RawDiscount = $"spar ca: {Math.Round(savings, 2)}kr/st";
+                                        product.MinQuantity = $"{minQuantity} för";
+                                        product.TotalPrice = ParseDecimal(GetStringProperty(firstPromo, "value"));
+                                        product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
                                     }
 
                                     var redeemLimit = GetStringProperty(firstPromo, "maxAppliedPerReceipt");
                                     if (!string.IsNullOrEmpty(redeemLimit))
                                     {
-                                        product.MaxQuantity = redeemLimit;
+                                        int.TryParse(redeemLimit, out int limit);
+                                        if (limit > 0)
+                                        {
+                                            product.MaxQuantity = $"Max {limit}/hushåll";
+                                        }
                                     }
 
                                     var campaignType = GetStringProperty(firstPromo, "membersOnly");
@@ -750,21 +763,7 @@ namespace PrisApi.Helper
                                         product.MemberDiscount = true;
                                     }
                                 }
-                                if (!string.IsNullOrEmpty(product.OrdJmfPrice))
-                                    product.OrdJmfPrice += comparePriceUnit;
-
-                                if (!string.IsNullOrEmpty(product.DiscountJmfPrice))
-                                    product.DiscountJmfPrice += comparePriceUnit;
                             }
-
-
-
-                            // var priceUnit = GetStringProperty(element, "priceUnit");
-                            // if (!string.IsNullOrEmpty(priceUnit) && !product.RawOrdPrice.Contains(priceUnit))
-                            // {
-                            //     product.RawOrdPrice += $" {priceUnit}";
-                            // }
-
 
                             if (string.IsNullOrEmpty(product.RawBrand))
                             {
@@ -821,25 +820,11 @@ namespace PrisApi.Helper
 
             return null;
         }
-        public double? GetNumProperty(JsonElement element, params string[] propertyNames)
+        private static decimal ParseDecimal(string number)
         {
-            foreach (var propName in propertyNames)
-            {
-                if (element.TryGetProperty(propName, out var prop))
-                {
-                    return prop.GetDouble();
-                }
+            decimal.TryParse(number, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal i);
 
-                foreach (var actualProp in element.EnumerateObject())
-                {
-                    if (actualProp.Name.Equals(propName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        return actualProp.Value.GetDouble();
-                    }
-                }
-            }
-
-            return null;
+            return i;
         }
     }
 }

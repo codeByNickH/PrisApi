@@ -102,7 +102,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaFruit")]
         public async Task<IActionResult> ScrapeIcaFruit()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica fruit initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[2], Zipcode[0].zip);
 
@@ -120,7 +120,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaFish")]
         public async Task<IActionResult> ScrapeIcaFish()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica fish initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[3], Zipcode[0].zip);
 
@@ -138,7 +138,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaBread")]
         public async Task<IActionResult> ScrapeIcaBread()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica bread initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[4], Zipcode[0].zip);
 
@@ -153,10 +153,10 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("IcaVeg")]
-        public async Task<IActionResult> ScrapeIcaVeg()
+        [HttpPost("IcaVege")]
+        public async Task<IActionResult> ScrapeIcaVege()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica vege initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[5], Zipcode[0].zip);
 
@@ -174,7 +174,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaPrePackagedMeal")]
         public async Task<IActionResult> ScrapeIcaPrePackagedMeal()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica prepackaged initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[6], Zipcode[0].zip);
 
@@ -192,7 +192,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaKids")]
         public async Task<IActionResult> ScrapeIcaKids()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica kids initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[7], Zipcode[0].zip);
 
@@ -210,7 +210,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaSnacks")]
         public async Task<IActionResult> ScrapeIcaSnacks()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica snacks initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[8], Zipcode[0].zip);
 
@@ -228,7 +228,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaDrinks")]
         public async Task<IActionResult> ScrapeIcaDrinks()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica drinks initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[9], Zipcode[0].zip);
 
@@ -246,7 +246,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaPantry")]
         public async Task<IActionResult> ScrapeIcaPantry()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica pantry initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[10], Zipcode[0].zip);
 
@@ -264,7 +264,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaFrozen")]
         public async Task<IActionResult> ScrapeIcaFrozen()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica frozen initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[11], Zipcode[0].zip);
 
@@ -282,7 +282,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaTobak")]
         public async Task<IActionResult> ScrapeIcaTobak()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica tobak initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[12], Zipcode[0].zip);
 
@@ -300,7 +300,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaCleaning")]
         public async Task<IActionResult> ScrapeIcaCleaning()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica cleaning initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[13], Zipcode[0].zip);
 
@@ -318,7 +318,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaKitchen")]
         public async Task<IActionResult> ScrapeIcaKitchen()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica kitchen initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[14], Zipcode[0].zip);
 
@@ -336,7 +336,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaPharmacy")]
         public async Task<IActionResult> ScrapeIcaPharmacy()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica pharmacy initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[15], Zipcode[0].zip);
 
@@ -354,7 +354,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaTraining")]
         public async Task<IActionResult> ScrapeIcaTraining()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica training initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[16], Zipcode[0].zip);
 
@@ -372,7 +372,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaAnimal")]
         public async Task<IActionResult> ScrapeIcaAnimal()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica animal initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[17], Zipcode[0].zip);
 
@@ -390,7 +390,7 @@ namespace PrisApi.Controllers
         [HttpPost("IcaGarden")]
         public async Task<IActionResult> ScrapeIcaGarden()
         {
-            _logger.LogInformation("Manual scraping of Ica all initiated");
+            _logger.LogInformation("Manual scraping of Ica garden initiated");
 
             var job = await _scraperService.ScrapeIcaAsync(category[18], Zipcode[0].zip);
 

@@ -11,6 +11,5 @@ namespace PrisApi.Helper.IHelper
         bool IsLikelyProduct(JsonElement element);
         Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeId);
         string GetStringProperty(JsonElement element, params string[] propertyNames);
-        double? GetNumProperty(JsonElement element, params string[] propertyNames);
     }
 }

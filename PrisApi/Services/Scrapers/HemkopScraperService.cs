@@ -140,15 +140,15 @@ namespace PrisApi.Services.Scrapers
                         price2 += string.Join("", price3);
                     }
 
-                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
-                        .Where(p => !string.IsNullOrEmpty(p))
-                        .Select(p => p.Trim()));
+                    // product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
+                    //     .Where(p => !string.IsNullOrEmpty(p))
+                    //     .Select(p => p.Trim()));
 
                     var savingElement = await element.QuerySelectorAsync("[class=\"sc-57d5cc93-14 kTSKTN\"]");
                     if (savingElement != null)
                     {
-                        product.RawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
-                        product.RawDiscount = product.RawDiscount.Trim();
+                        // product.RawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
+                        // product.RawDiscount = product.RawDiscount.Trim();
                     }
 
                     var brandElement = await element.QuerySelectorAsync("[itemprop=\"brand\"]");
@@ -185,7 +185,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product?.RawOrdPrice?.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString());
+                        Console.WriteLine($"{product?.RawBrand} {product.RawName} {product?.RawUnit} {product?.RawOrdPrice} {product?.RawDiscount} {product.MaxQuantity}");
                     }
                 }
 
@@ -197,7 +197,7 @@ namespace PrisApi.Services.Scrapers
                 throw;
             }
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -259,7 +259,7 @@ namespace PrisApi.Services.Scrapers
                                     {
                                         products.Add(product);
                                         processedProductIds.Add($"{product.RawName} {product.ID}");
-                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product?.RawOrdPrice} {product?.RawUnit} {product?.OrdJmfPrice} {product?.RawDiscount} {product?.RawDiscountPrice} {product?.DiscountJmfPrice} {product?.MaxQuantity} {product.MemberDiscount}");
+                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
                                     }
                                 }
                             }
@@ -282,7 +282,28 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]");
                 await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
 
+                // Does not have separate data per location ?
+
+                // await page.WaitForSelectorAsync("//*[@id='header']/div/div[1]/menu/li[5]/a"); // 
+                // await page.ClickAsync("//*[@id='header']/div/div[1]/menu/li[5]/a");
+
+                // await page.WaitForSelectorAsync("input[placeholder=\"Sök efter butik, butiksadress eller ort\"]");
+                // await page.FillAsync("input[placeholder=\"Sök efter butik, butiksadress eller ort\"]", "alft"); 
+
+                // await page.WaitForSelectorAsync("//*[@id='__next']/div[2]/div[2]/div[3]/div/div[2]/ul/li[1]"); 
+                // await page.ClickAsync("//*[@id='__next']/div[2]/div[2]/div[3]/div/div[2]/ul/li[1]");
+
                 await Task.Delay(500);
+
+                // await page.WaitForSelectorAsync("//*[@id='__next']/div[2]/div[4]/div[2]/div[1]/div[3]/div[1]/div[2]/div/div[4]/div/div/div/div[1]/div[2]/div/div/a/button");
+                // await page.ClickAsync("//*[@id='__next']/div[2]/div[4]/div[2]/div[1]/div[3]/div[1]/div[2]/div/div[4]/div/div/div/div[1]/div[2]/div/div/a/button");
+
+                // await page.WaitForSelectorAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
+                // await page.ClickAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
+
+                // await page.WaitForSelectorAsync($"a[href=\"{category}\"]");
+                // await page.ClickAsync($"a[href=\"{category}\"]");
+
                 const int maxScrollAttempts = 200;
                 int previousHeight = 0;
                 int noChangeCount = 0;
