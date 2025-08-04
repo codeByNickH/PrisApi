@@ -162,13 +162,13 @@ namespace PrisApi.Services.Scrapers
                     var savingElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
                     if (savingElement != null)
                     {
-                        var rawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
-                        product.RawDiscount = rawDiscount.Trim();
+                        // var rawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
+                        // product.RawDiscount = rawDiscount.Trim();
                     }
 
-                    product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
-                        .Where(p => !string.IsNullOrEmpty(p))
-                        .Select(p => p.Trim()));
+                    // product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
+                    //     .Where(p => !string.IsNullOrEmpty(p))
+                    //     .Select(p => p.Trim()));
 
                     var brandElement = await element.QuerySelectorAsync("[itemprop=\"brand\"]");
                     if (brandElement != null)
@@ -197,7 +197,7 @@ namespace PrisApi.Services.Scrapers
                     if (!string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount?.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
+                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
                     }
                 }
 
@@ -271,7 +271,7 @@ namespace PrisApi.Services.Scrapers
                                     {
                                         products.Add(product);
                                         processedProductIds.Add($"{product.RawName} {product.ID}");
-                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product?.RawOrdPrice} {product?.RawUnit} {product?.OrdJmfPrice} {product?.RawDiscount} {product?.RawDiscountPrice} {product?.DiscountJmfPrice} {product?.MaxQuantity} {product.MemberDiscount}");
+                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
                                     }
                                 }
                             }

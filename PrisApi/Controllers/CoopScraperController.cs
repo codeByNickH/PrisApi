@@ -119,7 +119,25 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop fruit initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[4], zipcode[1].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[4], zipcode[0].zip);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopVege")]
+        public async Task<IActionResult> ScrapeCoopVege()
+        {
+            _logger.LogInformation("Manual scraping of Coop vege initiated");
+
+            var job = await _scraperService.ScrapeCoopAsync(category[5], zipcode[0].zip);
 
             return Ok(new
             {
@@ -137,7 +155,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop frozen initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[5], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[6], zipcode[0].zip);
 
             return Ok(new
             {
@@ -155,7 +173,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop bread initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[6], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[7], zipcode[0].zip);
 
             return Ok(new
             {
@@ -173,7 +191,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop pantry initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[7], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[8], zipcode[0].zip);
 
             return Ok(new
             {
@@ -191,7 +209,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop drinks initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[8], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[9], zipcode[0].zip);
 
             return Ok(new
             {
@@ -209,7 +227,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop snacks initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[9], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[10], zipcode[0].zip);
 
             return Ok(new
             {
@@ -227,7 +245,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop pre-packaged initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[10], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[11], zipcode[0].zip);
 
             return Ok(new
             {
@@ -245,7 +263,7 @@ namespace PrisApi.Controllers
         {
             _logger.LogInformation("Manual scraping of Coop spices initiated");
 
-            var job = await _scraperService.ScrapeCoopAsync(category[11], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(category[12], zipcode[0].zip);
 
             return Ok(new
             {

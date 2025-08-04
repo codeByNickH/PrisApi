@@ -199,7 +199,7 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeHemkopAsync(string category)
+        public async Task<ScrapingJob> ScrapeHemkopAsync(string category, int location)
         {
             var job = new ScrapingJob
             {
@@ -212,7 +212,7 @@ namespace PrisApi.Services
                 _logger.LogInformation("Starting Hemkop scraping job at {time}", job.StartedAt);
 
                 var scraper = new HemkopScraperService(_scrapeHelper);
-                var scrapedProducts = await scraper.ScrapeProductsAsync(category);
+                var scrapedProducts = await scraper.ScrapeProductsAsync(category, location);
 
 
 
