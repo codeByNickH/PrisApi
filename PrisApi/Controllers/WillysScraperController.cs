@@ -9,7 +9,6 @@ namespace PrisApi.Controllers
     {
         private readonly ScraperService _scrapingService;
         private readonly ILogger<WillysScraperController> _logger;
-        // Change to enum or seperate file? 
         private readonly List<string> category = [
             "/sortiment/kott-chark-och-fagel",
             "/sortiment/mejeri-ost-och-agg",
@@ -33,8 +32,9 @@ namespace PrisApi.Controllers
         ];
         private readonly List<(int zip, string city)> Zipcode = [
             (82130, "Bollnäs"),
-            (0, "Gävle"),
-            (0, "Uppsala"),
+            (80257, "Gävle"),
+            (75318, "Uppsala Kungsgatan 95"),
+            (0, "Uppsala "),
             (0, "Stockholm, -")
         ];
         public WillysScraperController(ScraperService scrapingService, ILogger<WillysScraperController> logger)
@@ -49,6 +49,24 @@ namespace PrisApi.Controllers
             _logger.LogInformation("Manual scrape of Willys initiated");
 
             var job = await _scrapingService.ScrapeWillysOffersAsync(Zipcode[0].zip);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("WillysLoop")]
+        public async Task<IActionResult> ScrapeWillysLoop()
+        {
+            _logger.LogInformation("Manual scrape of Willys loop initiated");
+
+            var job = await _scrapingService.ScrapeWillysAsync(category, Zipcode[0].zip);
 
             return Ok(new
             {

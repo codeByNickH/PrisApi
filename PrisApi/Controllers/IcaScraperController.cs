@@ -31,14 +31,14 @@ namespace PrisApi.Controllers
             "Blommor & Trädgård",
             ];
         private readonly List<(int zip, string city)> Zipcode = [
-            (82391, "Bollnäs"),
-            (0, "Gävle"),
+            (82141, "Bollnäs"),
+            (80293, "Gävle Hemlingby Köpcentrum"),
             (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
-            (75267, "Uppsala Stenhagen"),
+            (0, ""),
+            (0, ""),
+            (0, ""),
+            (0, ""),
+            (0, ""),
         ];
         public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger)
         {

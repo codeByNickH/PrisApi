@@ -19,9 +19,9 @@ namespace PrisApi.Controllers
             "/matvaror/hushall",
             "/matvaror/godis",
             "/matvaror/dryck",
-            "/matvaror/snacks",
+            "/matvaror/snacks", //-------------
             "/matvaror/skonhet-och-hygien",
-            "/matvaror/chark",
+            "/matvaror/chark",  //-------------
             "/matvaror/fisk-och-skaldjur",
             "/matvaror/kyld-fardigmat",
             "/matvaror/vegetariskt",
@@ -35,7 +35,7 @@ namespace PrisApi.Controllers
             "/matvaror/tobak",
         ];
         private readonly List<(int zip, string city)> zipcode = [
-            (80293, "Gävle"),
+            (80293, "Gävle Ingenjörsgatan 15"),
         ];
         public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger)
         {
@@ -48,6 +48,24 @@ namespace PrisApi.Controllers
             _logger.LogInformation("Manual scrape of CityGross meat initiated");
 
             var job = await _scrapingService.ScrapeCityGrossAsync(category[0], zipcode[0].zip);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossDeli")]
+        public async Task<IActionResult> ScrapeCityGrossDeli()
+        {
+            _logger.LogInformation("Manual scrape of CityGross deli initiated");
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(category[11], zipcode[0].zip);
 
             return Ok(new
             {
@@ -228,24 +246,6 @@ namespace PrisApi.Controllers
             _logger.LogInformation("Manual scrape of CityGross hygiene initiated");
 
             var job = await _scrapingService.ScrapeCityGrossAsync(category[10], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossDeli")]
-        public async Task<IActionResult> ScrapeCityGrossDeli()
-        {
-            _logger.LogInformation("Manual scrape of CityGross deli initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[11], zipcode[0].zip);
 
             return Ok(new
             {

@@ -22,11 +22,12 @@ namespace PrisApi.Controllers
             "dryck",
             "godis-glass-snacks",
             "fardigmat-mellanmal",
-            "kryddor-smaksattare"
+            "kryddor-smaksattare",
+            "aktuella-erbjudanden"
         ];
         private readonly List<(int zip, string city)> zipcode = [
-            (82330, "Bollnäs"),
-            (81832, "Gävle"),
+            (82136, "Bollnäs"),
+            (81835, "Gävle Valbo"),
             (75323, "Uppsala"),
             (85753,"Sundsvall"),
             (90621,"Ersboda, Umeå"),

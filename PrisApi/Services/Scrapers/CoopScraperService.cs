@@ -11,7 +11,7 @@ namespace PrisApi.Services.Scrapers
         private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly bool _isCloud;
-        private const string StoreId = "coop";
+        private const string StoreName = "coop";
 
         public CoopScraperService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
         {
@@ -21,13 +21,13 @@ namespace PrisApi.Services.Scrapers
 
             _config = config ?? new ScraperConfig
             {
-                StoreId = StoreId,
+                StoreName = StoreName,
                 BaseUrl = "https://www.coop.se/handla/varor/",
                 RequestDelayMs = 50,
                 UseJavaScript = true
             };
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, string category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -64,7 +64,7 @@ namespace PrisApi.Services.Scrapers
 
             try
             {
-                await page.GotoAsync(_config.BaseUrl + category, new PageGotoOptions
+                await page.GotoAsync(_config.BaseUrl + navigation, new PageGotoOptions
                 {
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
@@ -120,7 +120,7 @@ namespace PrisApi.Services.Scrapers
                                     var content = await response.TextAsync();
                                     apiResponses.Add(content);
 
-                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreId);
+                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
 
                                     foreach (var product in extractedProducts)
                                     {
@@ -128,7 +128,7 @@ namespace PrisApi.Services.Scrapers
                                         {
                                             products.Add(product);
                                             processedProductIds.Add($"{product.RawName} {product?.ID}");
-                                            Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
+                                            Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
                                         }
                                     }
                                 }

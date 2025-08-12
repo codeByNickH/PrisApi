@@ -5,6 +5,8 @@ namespace PrisApi.Models.Scraping
         public string ID { get; set; }
         public string RawName { get; set; }
         public string RawBrand { get; set; }
+        public string Category { get; set; }
+        public string CountryOfOrigin { get; set; }
         public decimal RawOrdPrice { get; set; }
         public decimal RawDiscountPrice { get; set; }
         public decimal RawDiscount { get; set; }
@@ -17,9 +19,8 @@ namespace PrisApi.Models.Scraping
         public decimal Size { get; set; }
         public byte DepositPrice { get; set; }
         public string ImageSrc { get; set; }
-        public string ProductUrl { get; set; }
-        public string StoreId { get; set; }
-        public string StoreLocation { get; set; }
+        public string StoreName { get; set; }
+        public int StoreLocation { get; set; }
         public string MaxQuantity { get; set; }
         public string MinQuantity { get; set; }
         public decimal TotalPrice { get; set; }

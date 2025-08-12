@@ -10,7 +10,7 @@ namespace PrisApi.Services.Scrapers
     {
         private readonly ScraperConfig _config;
         private readonly bool _isCloud;
-        private const string StoreId = "ica";
+        private const string StoreName = "ica";
         private readonly IScrapeHelper _scrapeHelper;
         public IcaScrapeService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
         {
@@ -20,7 +20,7 @@ namespace PrisApi.Services.Scrapers
 
             _config = config ?? new ScraperConfig
             {
-                StoreId = StoreId,
+                StoreName = StoreName,
                 BaseUrl = "https://handlaprivatkund.ica.se",
                 ProductListSelector = "[data-promotion-list-name=\"erbjudanden\"]",
                 RequestDelayMs = 50,
@@ -111,7 +111,7 @@ namespace PrisApi.Services.Scrapers
                 {
                     var product = new ScrapedProduct
                     {
-                        StoreId = StoreId,
+                        StoreName = StoreName,
                         ScrapedAt = DateTime.UtcNow
                     };
 
@@ -198,7 +198,7 @@ namespace PrisApi.Services.Scrapers
             }
         }
 
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, string category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -247,14 +247,14 @@ namespace PrisApi.Services.Scrapers
                                 var content = await response.TextAsync();
                                 apiResponses.Add(content);
 
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreId);
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
                                 foreach (var product in extractedProducts)
                                 {
                                     if (!processedProductIds.Contains(product.RawName))
                                     {
                                         products.Add(product);
                                         processedProductIds.Add(product.RawName);
-                                        Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
+                                        Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
                                     }
                                 }
                             }
@@ -291,8 +291,8 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync("[id=\"nav-menu-button\"]");
                 await page.ClickAsync("[id=\"nav-menu-button\"]");
 
-                await page.WaitForSelectorAsync($"[data-test=\"{category}\"]");
-                await page.ClickAsync($"[data-test=\"{category}\"]");
+                await page.WaitForSelectorAsync($"[data-test=\"{navigation}\"]");
+                await page.ClickAsync($"[data-test=\"{navigation}\"]");
 
                 await page.WaitForSelectorAsync("[data-first=\"nav-pane-1\"]");
                 await page.ClickAsync("[data-first=\"nav-pane-1\"]");
