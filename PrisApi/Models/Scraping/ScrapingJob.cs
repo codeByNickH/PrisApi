@@ -1,14 +1,21 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace PrisApi.Models.Scraping;
 
 public class ScrapingJob
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public string StoreId { get; set; }
+    [MaxLength(50)]
+    public string StoreName { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public bool Success { get; set; }
+    [MaxLength(255)]
     public string ErrorMessage { get; set; }
+    [Range(1, 100000)]
     public int ProductsScraped { get; set; }
+    [Range(1, 100000)]
     public int NewProducts { get; set; }
+    [Range(1, 100000)]
     public int UpdatedProducts { get; set; }
 }

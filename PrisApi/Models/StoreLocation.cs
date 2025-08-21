@@ -6,21 +6,16 @@ namespace PrisApi.Models
     public class StoreLocation
     {
         [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
-        
-        public string StoreId { get; set; }
-        
-        [Required, MaxLength(255)]
+        [Required, MaxLength(100)]
         public string Address { get; set; }
-        
-        [MaxLength(100)]
+        [Required, MaxLength(100)]
         public string City { get; set; }
-        
-        [MaxLength(20)]
-        public string PostalCode { get; set; }
-        
-        // Navigation property
-        [ForeignKey("StoreId")]
-        public Store Store { get; set; }
+        [MaxLength(100)]
+        public string District { get; set; }
+        [Required, Range(10000, 99999, ErrorMessage = "Postal code must be a 5-digit number.")]
+        public int PostalCode { get; set; }
+        public ICollection<Store> Stores { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PrisApi.Helper.IHelper;
 using PrisApi.Services;
 
 namespace PrisApi.Controllers
@@ -9,24 +10,10 @@ namespace PrisApi.Controllers
     {
         private readonly ScraperService _scraperService;
         private readonly ILogger<CoopScraperController> _logger;
-        private readonly List<string> category = [
-            "kott-fagel-chark",
-            "mejeri-agg",
-            "ost",
-            "fisk-skaldjur",
-            "frukt-gronsaker",
-            "vegetariskt",
-            "frys",
-            "brod-bageri",
-            "skafferi",
-            "dryck",
-            "godis-glass-snacks",
-            "fardigmat-mellanmal",
-            "kryddor-smaksattare"
-        ];
+        private readonly IScrapeConfigHelper _configHelper;
         private readonly List<(int zip, string city)> zipcode = [
-            (82330, "Bollnäs"),
-            (81832, "Gävle"),
+            (82136, "Bollnäs"),
+            (81835, "Gävle Valbo"),
             (75323, "Uppsala"),
             (85753,"Sundsvall"),
             (90621,"Ersboda, Umeå"),
@@ -37,17 +24,19 @@ namespace PrisApi.Controllers
             (43633, "Sisjön, Göteborg"),
             (23234, "Burlöv, Malmö")
         ];
-        public CoopScraperController(ScraperService scraperService, ILogger<CoopScraperController> logger)
+        public CoopScraperController(ScraperService scraperService, ILogger<CoopScraperController> logger, IScrapeConfigHelper configHelper)
         {
             _scraperService = scraperService;
             _logger = logger;
+            _configHelper = configHelper;
         }
         [HttpPost("CoopMeat")]
         public async Task<IActionResult> ScrapeCoopMeat()
         {
-            _logger.LogInformation("Manual scraping of Coop meat initiated");
+            _logger.LogInformation("Scrape of Coop meat initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[0], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavMeat, zipcode[0].zip, 1);
 
             return Ok(new
             {
@@ -63,9 +52,10 @@ namespace PrisApi.Controllers
         [HttpPost("CoopDairy")]
         public async Task<IActionResult> ScrapeCoopDairy()
         {
-            _logger.LogInformation("Manual scraping of Coop dairy initiated");
+            _logger.LogInformation("Scrape of Coop dairy initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[1], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavDairy, zipcode[0].zip, 2);
 
             return Ok(new
             {
@@ -81,27 +71,10 @@ namespace PrisApi.Controllers
         [HttpPost("CoopCheese")]
         public async Task<IActionResult> ScrapeCoopCheese()
         {
-            _logger.LogInformation("Manual scraping of Coop cheese initiated");
+            _logger.LogInformation("Scrape of Coop cheese initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[2], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CoopFish")]
-        public async Task<IActionResult> ScrapeCoopFish()
-        {
-            _logger.LogInformation("Manual scraping of Coop fish initiated");
-
-            var job = await _scraperService.ScrapeCoopAsync(category[3], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavCheese, zipcode[0].zip, 2);
 
             return Ok(new
             {
@@ -117,63 +90,10 @@ namespace PrisApi.Controllers
         [HttpPost("CoopFruit")]
         public async Task<IActionResult> ScrapeCoopFruit()
         {
-            _logger.LogInformation("Manual scraping of Coop fruit initiated");
+            _logger.LogInformation("Scrape of Coop fruit initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[4], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CoopVege")]
-        public async Task<IActionResult> ScrapeCoopVege()
-        {
-            _logger.LogInformation("Manual scraping of Coop vege initiated");
-
-            var job = await _scraperService.ScrapeCoopAsync(category[5], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CoopFrozen")]
-        public async Task<IActionResult> ScrapeCoopFrozen()
-        {
-            _logger.LogInformation("Manual scraping of Coop frozen initiated");
-
-            var job = await _scraperService.ScrapeCoopAsync(category[6], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CoopBread")]
-        public async Task<IActionResult> ScrapeCoopBread()
-        {
-            _logger.LogInformation("Manual scraping of Coop bread initiated");
-
-            var job = await _scraperService.ScrapeCoopAsync(category[7], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFruitAndVegetables, zipcode[0].zip, 3);
 
             return Ok(new
             {
@@ -189,9 +109,10 @@ namespace PrisApi.Controllers
         [HttpPost("CoopPantry")]
         public async Task<IActionResult> ScrapeCoopPantry()
         {
-            _logger.LogInformation("Manual scraping of Coop pantry initiated");
+            _logger.LogInformation("Scrape of Coop pantry initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[8], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavPantry, zipcode[0].zip, 4);
 
             return Ok(new
             {
@@ -204,12 +125,70 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("CoopDrinks")]
-        public async Task<IActionResult> ScrapeCoopDrinks()
+        [HttpPost("CoopFrozen")]
+        public async Task<IActionResult> ScrapeCoopFrozen()
         {
-            _logger.LogInformation("Manual scraping of Coop drinks initiated");
+            _logger.LogInformation("Scrape of Coop frozen initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[9], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFrozen, zipcode[0].zip, 5);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopBread")]
+        public async Task<IActionResult> ScrapeCoopBread()
+        {
+            _logger.LogInformation("Scrape of Coop bread initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBreadAndCookies, zipcode[0].zip, 6);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopFish")]
+        public async Task<IActionResult> ScrapeCoopFish()
+        {
+            _logger.LogInformation("Scrape of Coop fish initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFishAndSeafood, zipcode[0].zip, 7);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopVege")]
+        public async Task<IActionResult> ScrapeCoopVege()
+        {
+            _logger.LogInformation("Scrape of Coop vege initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavVegetarian, zipcode[0].zip, 8);
 
             return Ok(new
             {
@@ -225,9 +204,29 @@ namespace PrisApi.Controllers
         [HttpPost("CoopSnacks")]
         public async Task<IActionResult> ScrapeCoopSnacks()
         {
-            _logger.LogInformation("Manual scraping of Coop snacks initiated");
+            _logger.LogInformation("Scrape of Coop snacks initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[10], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, zipcode[0].zip, 9);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopDrinks")]
+        public async Task<IActionResult> ScrapeCoopDrinks()
+        {
+            _logger.LogInformation("Scrape of Coop drinks initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBeverage, zipcode[0].zip, 10);
 
             return Ok(new
             {
@@ -243,9 +242,10 @@ namespace PrisApi.Controllers
         [HttpPost("CoopPrePackageMeal")]
         public async Task<IActionResult> ScrapeCoopPrePackageMeal()
         {
-            _logger.LogInformation("Manual scraping of Coop pre-packaged initiated");
+            _logger.LogInformation("Scrape of Coop pre-packaged initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[11], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavReadyMeals, zipcode[0].zip, 11);
 
             return Ok(new
             {
@@ -258,12 +258,13 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("CoopSpices")]
-        public async Task<IActionResult> ScrapeCoopSpices()
+        [HttpPost("CoopKids")]
+        public async Task<IActionResult> ScrapeCoopKids()
         {
-            _logger.LogInformation("Manual scraping of Coop spices initiated");
+            _logger.LogInformation("Scrape of Coop kids initiated");
+            var config = await _configHelper.GetConfig(3);
 
-            var job = await _scraperService.ScrapeCoopAsync(category[12], zipcode[0].zip);
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavKids, zipcode[0].zip, 12);
 
             return Ok(new
             {
@@ -276,5 +277,119 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
+        [HttpPost("CoopCleaning")]
+        public async Task<IActionResult> ScrapeCoopCleaning()
+        {
+            _logger.LogInformation("Scrape of Coop cleaning initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHomeAndCleaning, zipcode[0].zip, 13);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopHealth")]
+        public async Task<IActionResult> ScrapeCoopHealth()
+        {
+            _logger.LogInformation("Scrape of Coop health initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHealth, zipcode[0].zip, 14);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopHygien")]
+        public async Task<IActionResult> ScrapeCoopHygien()
+        {
+            _logger.LogInformation("Scrape of Coop hygien initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHygien, zipcode[0].zip, 14);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopAnimal")]
+        public async Task<IActionResult> ScrapeCoopAnimal()
+        {
+            _logger.LogInformation("Scrape of Coop animal initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavAnimals, zipcode[0].zip, 16);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CoopTobak")]
+        public async Task<IActionResult> ScrapeCoopTobak()
+        {
+            _logger.LogInformation("Scrape of Coop tobak initiated");
+            var config = await _configHelper.GetConfig(3);
+
+            var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavTobacco, zipcode[0].zip, 17);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        // [HttpPost("CoopSpices")]
+        // public async Task<IActionResult> ScrapeCoopSpices()
+        // {
+        //     _logger.LogInformation("Scrape of Coop spices initiated");
+        //     var config = await _configHelper.GetConfig(3);
+
+        //     var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavMeat, zipcode[0].zip, 1);
+
+        //     return Ok(new
+        //     {
+        //         Success = job.Success,
+        //         ProductsScraped = job.ProductsScraped,
+        //         NewProducts = job.NewProducts,
+        //         UpdatedProducts = job.UpdatedProducts,
+        //         StartedAt = job.StartedAt,
+        //         CompletedAt = job.CompletedAt,
+        //         ErrorMessage = job.ErrorMessage
+        //     });
+        // }
     }
 }

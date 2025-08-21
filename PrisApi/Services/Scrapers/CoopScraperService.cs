@@ -11,7 +11,7 @@ namespace PrisApi.Services.Scrapers
         private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly bool _isCloud;
-        private const string StoreId = "coop";
+        private const string StoreName = "coop";
 
         public CoopScraperService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
         {
@@ -21,13 +21,13 @@ namespace PrisApi.Services.Scrapers
 
             _config = config ?? new ScraperConfig
             {
-                StoreId = StoreId,
+                StoreName = StoreName,
                 BaseUrl = "https://www.coop.se/handla/varor/",
                 RequestDelayMs = 50,
                 UseJavaScript = true
             };
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -64,28 +64,28 @@ namespace PrisApi.Services.Scrapers
 
             try
             {
-                await page.GotoAsync(_config.BaseUrl + category, new PageGotoOptions
+                await page.GotoAsync(_config.BaseUrl + navigation, new PageGotoOptions
                 {
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
 
-                await page.WaitForSelectorAsync("[id=\"cmpbox\"]");
-                await page.ClickAsync("[id=\"cmpwelcomebtnno\"]");
+                await page.WaitForSelectorAsync("[id=\"cmpbox\"]"); // CookieBanner
+                await page.ClickAsync("[id=\"cmpwelcomebtnno\"]"); // RejectCookies
 
                 await Task.Delay(500);
 
-                await page.WaitForSelectorAsync("[class=\"eJadUlKd\"]");
+                await page.WaitForSelectorAsync("[class=\"eJadUlKd\"]"); // OpenChooseStore
                 await page.ClickAsync("[class=\"eJadUlKd\"]");
 
-                await page.WaitForSelectorAsync("input[placeholder=\"Ange ditt postnummer\"]");
+                await page.WaitForSelectorAsync("input[placeholder=\"Ange ditt postnummer\"]"); // SearchStore
                 await page.FillAsync("input[placeholder=\"Ange ditt postnummer\"]", location.ToString());
-
-                await page.WaitForSelectorAsync("[class=\"gUGSFhfR UhM7Xoea ucdesrxw qfkHWAKt\"]");
+                await Task.Delay(3000);
+                await page.WaitForSelectorAsync("[class=\"gUGSFhfR UhM7Xoea ucdesrxw qfkHWAKt\"]"); // SearchButton
                 await page.ClickAsync("[class=\"gUGSFhfR UhM7Xoea ucdesrxw qfkHWAKt\"]");
 
                 try
                 {
-                    await page.WaitForSelectorAsync("[data-key=\"pickup\"]", new PageWaitForSelectorOptions { Timeout = 2000 });
+                    await page.WaitForSelectorAsync("[data-key=\"pickup\"]", new PageWaitForSelectorOptions { Timeout = 2000 }); // StorePickupOption
                     await page.ClickAsync("[data-key=\"pickup\"]", new PageClickOptions { Timeout = 500 });
                 }
                 catch
@@ -93,10 +93,10 @@ namespace PrisApi.Services.Scrapers
                     Console.WriteLine("No home delivery option detected, continuing..");
                 }
 
-                await page.WaitForSelectorAsync("[class=\"yWvaV7fj\"]");
+                await page.WaitForSelectorAsync("[class=\"yWvaV7fj\"]"); // SelectStore
                 await page.ClickAsync("[class=\"yWvaV7fj\"]");
 
-                await page.WaitForSelectorAsync("[class=\"gUGSFhfR CkqGWkRo ucdesrxw qfkHWAKt\"]");
+                await page.WaitForSelectorAsync("[class=\"gUGSFhfR CkqGWkRo ucdesrxw qfkHWAKt\"]"); // CloseChooseTab
                 await page.ClickAsync("[class=\"gUGSFhfR CkqGWkRo ucdesrxw qfkHWAKt\"]");
 
 
@@ -120,15 +120,15 @@ namespace PrisApi.Services.Scrapers
                                     var content = await response.TextAsync();
                                     apiResponses.Add(content);
 
-                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreId);
+                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
 
                                     foreach (var product in extractedProducts)
                                     {
-                                        if (!processedProductIds.Contains($"{product.RawName} {product?.ID}"))
+                                        if (!processedProductIds.Contains($"{product.RawName} {product.ID}"))
                                         {
                                             products.Add(product);
-                                            processedProductIds.Add($"{product.RawName} {product?.ID}");
-                                            Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
+                                            processedProductIds.Add($"{product.RawName} {product.ID}");
+                                            Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
                                         }
                                     }
                                 }
@@ -173,9 +173,6 @@ namespace PrisApi.Services.Scrapers
                         break;
                     }
                 }
-
-
-                Console.WriteLine($"Total products scraped: {products.Count}");
 
                 if (apiResponses.Count > 0)
                 {

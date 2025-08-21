@@ -1,16 +1,26 @@
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace PrisApi.Models.Scraping
 {
     public class ScraperConfig
     {
-        public string StoreId { get; set; }
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int Id { get; set; }
+        [Required, MaxLength(50)]
+        public string StoreName { get; set; }
+        [MaxLength(150)]
         public string BaseUrl { get; set; }
-                                                        // Maybe add all Selectors for all playwright navigation?
-        public string ProductListSelector { get; set; }
-        public string ProductNameSelector { get; set; }
-        public string ProductPriceSelector { get; set; }
-        public string ProductImageSelector { get; set; }
-        public Dictionary<string, string> Headers { get; set; } = new();
-        public int RequestDelayMs { get; set; } = 1000;
+        public int RequestDelayMs { get; set; } = 50;
         public bool UseJavaScript { get; set; } = false;
+        [Required]
+        public int ScraperSelectorId { get; set; }
+        [ForeignKey("ScraperSelectorId")]
+        public ScraperSelector ScraperSelector { get; set; }
+        [Required]
+        public int ScraperNavigationId { get; set; }
+        [ForeignKey("ScraperNavigationId")]
+        public ScraperNavigation ScraperNavigation { get; set; }
     }
 }

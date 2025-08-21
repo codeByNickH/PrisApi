@@ -6,19 +6,16 @@ namespace PrisApi.Models;
 public class PriceHistory
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int Id { get; set; }
-
+    [Required]
     public int ProductId { get; set; }
-
-    [Column(TypeName = "decimal(10, 2)")]
+    [Column(TypeName = "decimal(9, 2)")]
     public decimal Price { get; set; }
-    [Column(TypeName = "decimal(10, 2)")]
-    public decimal JmfPrice { get; set; }
-    
-    // Add jmfPrice is per kg/st/l
-
+    [Column(TypeName = "decimal(9, 2)")]
+    public decimal ComparePrice { get; set; }
+    [MaxLength(10)]
+    public string CompareUnit { get; set; }
+    public bool WasDiscount { get; set; } = false;
     public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
-
-    [ForeignKey("ProductId")]
-    public Product Product { get; set; }
 }

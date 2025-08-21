@@ -11,7 +11,8 @@ namespace PrisApi.Services.Scrapers
         private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly bool _isCloud;
-        private const string StoreId = "hemkop";
+        private const string StoreName = "hemkop";
+        private string ProductListSelector = "[data-testid=\"product\"]";
         public HemkopScraperService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
         {
             _scrapeHelper = scrapeHelper;
@@ -20,9 +21,8 @@ namespace PrisApi.Services.Scrapers
 
             _config = config ?? new ScraperConfig
             {
-                StoreId = StoreId,
+                StoreName = StoreName,
                 BaseUrl = "https://www.hemkop.se/",
-                ProductListSelector = "[data-testid=\"product\"]",
                 RequestDelayMs = 50,
                 UseJavaScript = true
             };
@@ -105,13 +105,13 @@ namespace PrisApi.Services.Scrapers
 
                 await Task.Delay(500);
 
-                var articleElements = await page.QuerySelectorAllAsync(_config.ProductListSelector);
+                var articleElements = await page.QuerySelectorAllAsync(ProductListSelector);
                 System.Console.WriteLine(articleElements.Count.ToString());
                 foreach (var element in articleElements)
                 {
                     var product = new ScrapedProduct
                     {
-                        StoreId = StoreId,
+                        StoreName = StoreName,
                         ScrapedAt = DateTime.UtcNow
                     };
 
@@ -197,7 +197,7 @@ namespace PrisApi.Services.Scrapers
                 throw;
             }
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string category, int location)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -251,7 +251,7 @@ namespace PrisApi.Services.Scrapers
                                 var content = await response.TextAsync();
                                 apiResponses.Add(content);
 
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreId);
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
 
                                 foreach (var product in extractedProducts)
                                 {
@@ -274,7 +274,7 @@ namespace PrisApi.Services.Scrapers
 
             try
             {
-                await page.GotoAsync(_config.BaseUrl + category, new PageGotoOptions
+                await page.GotoAsync(_config.BaseUrl + navigation, new PageGotoOptions
                 {
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
@@ -333,8 +333,6 @@ namespace PrisApi.Services.Scrapers
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Height: {currentHeight}");
                 }
-
-                Console.WriteLine($"Total products scraped: {products.Count}");
 
                 if (apiResponses.Count > 0)
                 {
