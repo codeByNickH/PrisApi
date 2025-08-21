@@ -2,6 +2,12 @@ using PrisApi.Services.Scrapers;
 using PrisApi.Services;
 using PrisApi.Helper.IHelper;
 using PrisApi.Helper;
+using PrisApi.Data;
+using Microsoft.EntityFrameworkCore;
+using PrisApi.Repository.IRepository;
+using PrisApi.Models.Scraping;
+using PrisApi.Repository;
+using PrisApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -24,11 +30,19 @@ builder.Services.AddSingleton(_ =>
     }
 });
 
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
+    throw new InvalidOperationException("Connection string 'DefaultConnection' not found")
+));
+
 builder.Services.AddControllers();
 builder.Services.AddTransient<WillysScrapeService>();
 builder.Services.AddTransient<IcaScrapeService>();
 builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<IScrapeHelper, ScrapeHelper>();
+builder.Services.AddScoped<IRepository<ScraperConfig>, ConfigRepository>();
+builder.Services.AddScoped<IRepository<Product>, ProductRepository>();
+builder.Services.AddScoped<IScrapeConfigHelper, ScrapeConfigHelper>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

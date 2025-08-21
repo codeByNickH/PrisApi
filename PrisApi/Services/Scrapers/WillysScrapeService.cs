@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.Playwright;
+using PrisApi.Data;
 using PrisApi.Helper.IHelper;
 using PrisApi.Models.Scraping;
 using PrisApi.Services.IService;
@@ -8,30 +9,27 @@ namespace PrisApi.Services.Scrapers
 {
     public class WillysScrapeService
     {
-        private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly bool _isCloud;
+        private readonly IScrapeConfigHelper _scraperConfig;
         private const string StoreName = "willys";
-
-        public WillysScrapeService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
+        private string ProductListSelector = "[data-testid=\"product\"]";
+        public WillysScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
         {
             _scrapeHelper = scrapeHelper;
+            _scraperConfig = scrapeConfig;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
-            _config = config ?? new ScraperConfig
-            {
-                StoreName = StoreName,
-                BaseUrl = "https://www.willys.se/",
-                ProductListSelector = "[data-testid=\"product\"]",
-                RequestDelayMs = 50,
-                UseJavaScript = true
-            };
         }
-
+        private async Task<ScraperConfig> GetConfig()
+        {
+            return await _scraperConfig.GetConfig(2);
+        }
         public async Task<List<ScrapedProduct>> ScrapeDiscountProductsAsync(int location)
         {
             using var playwright = await Playwright.CreateAsync();
+            var _config = await GetConfig();
 
             var options = new BrowserTypeLaunchOptions
             {
@@ -103,7 +101,7 @@ namespace PrisApi.Services.Scrapers
                     }
                 }
 
-                var articleElements = await page.QuerySelectorAllAsync(_config.ProductListSelector);
+                var articleElements = await page.QuerySelectorAllAsync(ProductListSelector);
 
                 foreach (var element in articleElements)
                 {
@@ -210,9 +208,10 @@ namespace PrisApi.Services.Scrapers
             }
         }
 
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, string category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
         {
             using var playwright = await Playwright.CreateAsync();
+            var _config = await GetConfig();
 
             var options = new BrowserTypeLaunchOptions
             {
@@ -293,30 +292,30 @@ namespace PrisApi.Services.Scrapers
                     WaitUntil = WaitUntilState.DOMContentLoaded,
                 });
 
-                await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]");
-                await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CookieBannerSelector}]"); // Cookies
+                await page.ClickAsync($"[{_config.ScraperSelector.RejectCookiesSelector}]");
 
-                await page.WaitForSelectorAsync("[data-testid=\"delivery-picker-toggle\"]");
-                await page.ClickAsync("[data-testid=\"delivery-picker-toggle\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]"); // OpenChooseStore
+                await page.ClickAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]");
 
-                await page.WaitForSelectorAsync("[data-testid=\"delivery-method-pickUpInStore\"]");
-                await page.ClickAsync("[data-testid=\"delivery-method-pickUpInStore\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.PickupOptionSelector}]"); // StorePickupOption
+                await page.ClickAsync($"[{_config.ScraperSelector.PickupOptionSelector}]");
 
-                await page.WaitForSelectorAsync("input[placeholder=\"Sök på butik\"]");
-                await page.FillAsync("input[placeholder=\"Sök på butik\"]", location.ToString()); 
+                await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", location.ToString());
 
-                await page.WaitForSelectorAsync("[class=\"sc-4b41f1b4-2 cIxYss\"]");
-                await page.ClickAsync("[class=\"sc-4b41f1b4-2 cIxYss\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]"); // SelectStore
+                await page.ClickAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");
 
                 await Task.Delay(500); // Picking store needs await to go through does not work otherwise.
 
                 // await page.WaitForLoadStateAsync(LoadState.NetworkIdle); // Why does this not work?
 
-                await page.WaitForSelectorAsync("[data-testid=\"slidein-close-button\"]");
-                await page.ClickAsync("[data-testid=\"slidein-close-button\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]"); // CloseChooseTab
+                await page.ClickAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]");
 
-                await page.WaitForSelectorAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
-                await page.ClickAsync("[class=\"sc-5cf2ead7-2 eTtqdC\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CategoryNavSelector}]"); // OpenCategoryNav
+                await page.ClickAsync($"[{_config.ScraperSelector.CategoryNavSelector}]");
 
                 await page.WaitForSelectorAsync($"a[href=\"{navigation}\"]");
                 await page.ClickAsync($"a[href=\"{navigation}\"]");
@@ -350,8 +349,6 @@ namespace PrisApi.Services.Scrapers
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products scraped: {products.Count}");
                 }
-
-                Console.WriteLine($"Total products scraped: {products.Count}");
 
                 if (apiResponses.Count > 0)
                 {

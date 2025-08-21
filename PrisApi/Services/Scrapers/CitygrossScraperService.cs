@@ -26,7 +26,7 @@ namespace PrisApi.Services.Scrapers
                 UseJavaScript = true
             };
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, string category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -170,8 +170,6 @@ namespace PrisApi.Services.Scrapers
                         break;
                     }
                 }
-
-                Console.WriteLine($"Total products scraped: {products.Count}");
 
                 if (apiResponses.Count > 0)
                 {

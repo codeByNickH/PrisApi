@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PrisApi.Helper.IHelper;
 using PrisApi.Services;
 
 namespace PrisApi.Controllers
@@ -9,45 +10,23 @@ namespace PrisApi.Controllers
     {
         private readonly ScraperService _scrapingService;
         private readonly ILogger<CitygrossScraperController> _logger;
-        private readonly List<string> category = [
-            "/matvaror/kott-och-fagel",
-            "/matvaror/frukt-och-gront",
-            "/matvaror/mejeri-ost-och-agg",
-            "/matvaror/skafferiet",
-            "/matvaror/fryst",
-            "/matvaror/brod-och-bageri",
-            "/matvaror/hushall",
-            "/matvaror/godis",
-            "/matvaror/dryck",
-            "/matvaror/snacks", //-------------
-            "/matvaror/skonhet-och-hygien",
-            "/matvaror/chark",  //-------------
-            "/matvaror/fisk-och-skaldjur",
-            "/matvaror/kyld-fardigmat",
-            "/matvaror/vegetariskt",
-            "/matvaror/barn",
-            "/matvaror/blommor",
-            "/matvaror/hem-och-fritid",
-            "/matvaror/koket",
-            "/matvaror/husdjur",
-            "/matvaror/apotek-och-receptfria-lakemedel",
-            "/matvaror/halsa",
-            "/matvaror/tobak",
-        ];
+        private readonly IScrapeConfigHelper _configHelper;
         private readonly List<(int zip, string city)> zipcode = [
             (80293, "Gävle Ingenjörsgatan 15"),
         ];
-        public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger)
+        public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger, IScrapeConfigHelper configHelper)
         {
             _scrapingService = scraperService;
             _logger = logger;
+            _configHelper = configHelper;
         }
         [HttpPost("CityGrossMeat")]
         public async Task<IActionResult> ScrapeCityGrossMeat()
         {
-            _logger.LogInformation("Manual scrape of CityGross meat initiated");
+            _logger.LogInformation("Scrape of CityGross meat initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[0], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavMeat, zipcode[0].zip, 1);
 
             return Ok(new
             {
@@ -63,27 +42,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossDeli")]
         public async Task<IActionResult> ScrapeCityGrossDeli()
         {
-            _logger.LogInformation("Manual scrape of CityGross deli initiated");
+            _logger.LogInformation("Scrape of CityGross deli initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[11], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossFruit")]
-        public async Task<IActionResult> ScrapeCityGrossFruit()
-        {
-            _logger.LogInformation("Manual scrape of CityGross fruit initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[1], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavChark, zipcode[0].zip, 1);
 
             return Ok(new
             {
@@ -99,9 +61,29 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossDairy")]
         public async Task<IActionResult> ScrapeCityGrossDairy()
         {
-            _logger.LogInformation("Manual scrape of CityGross dairy initiated");
+            _logger.LogInformation("Scrape of CityGross dairy initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[2], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavDairy, zipcode[0].zip, 2);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossFruit")]
+        public async Task<IActionResult> ScrapeCityGrossFruit()
+        {
+            _logger.LogInformation("Scrape of CityGross fruit initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFruitAndVegetables, zipcode[0].zip, 3);
 
             return Ok(new
             {
@@ -117,9 +99,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossPantry")]
         public async Task<IActionResult> ScrapeCityGrossPantry()
         {
-            _logger.LogInformation("Manual scrape of CityGross pantry initiated");
+            _logger.LogInformation("Scrape of CityGross pantry initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[3], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPantry, zipcode[0].zip, 4);
 
             return Ok(new
             {
@@ -135,9 +118,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossFrozen")]
         public async Task<IActionResult> ScrapeCityGrossFrozen()
         {
-            _logger.LogInformation("Manual scrape of CityGross frozen initiated");
+            _logger.LogInformation("Scrape of CityGross frozen initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[4], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFrozen, zipcode[0].zip, 5);
 
             return Ok(new
             {
@@ -153,99 +137,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossBread")]
         public async Task<IActionResult> ScrapeCityGrossBread()
         {
-            _logger.LogInformation("Manual scrape of CityGross bread initiated");
+            _logger.LogInformation("Scrape of CityGross bread initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[5], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossCleaning")]
-        public async Task<IActionResult> ScrapeCityGrossCleaning()
-        {
-            _logger.LogInformation("Manual scrape of CityGross cleaning initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[6], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossCandy")]
-        public async Task<IActionResult> ScrapeCityGrossCandy()
-        {
-            _logger.LogInformation("Manual scrape of CityGross candy initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[7], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossDrinks")]
-        public async Task<IActionResult> ScrapeCityGrossDrinks()
-        {
-            _logger.LogInformation("Manual scrape of CityGross drinks initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[8], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossSnacks")]
-        public async Task<IActionResult> ScrapeCityGrossSnacks()
-        {
-            _logger.LogInformation("Manual scrape of CityGross snacks initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[9], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossHygiene")]
-        public async Task<IActionResult> ScrapeCityGrossHygiene()
-        {
-            _logger.LogInformation("Manual scrape of CityGross hygiene initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[10], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBreadAndCookies, zipcode[0].zip, 6);
 
             return Ok(new
             {
@@ -261,27 +156,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossFish")]
         public async Task<IActionResult> ScrapeCityGrossFish()
         {
-            _logger.LogInformation("Manual scrape of CityGross fish initiated");
+            _logger.LogInformation("Scrape of CityGross fish initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[12], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossPrePackageMeal")]
-        public async Task<IActionResult> ScrapeCityGrossPrePackageMeal()
-        {
-            _logger.LogInformation("Manual scrape of CityGross prepackage initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[13], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFishAndSeafood, zipcode[0].zip, 7);
 
             return Ok(new
             {
@@ -297,9 +175,86 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossVege")]
         public async Task<IActionResult> ScrapeCityGrossVege()
         {
-            _logger.LogInformation("Manual scrape of CityGross vege initiated");
+            _logger.LogInformation("Scrape of CityGross vege initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[14], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavVegetarian, zipcode[0].zip, 8);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossSnacks")]
+        public async Task<IActionResult> ScrapeCityGrossSnacks()
+        {
+            _logger.LogInformation("Scrape of CityGross snacks initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavSnacks, zipcode[0].zip, 9);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossCandy")]
+        public async Task<IActionResult> ScrapeCityGrossCandy()
+        {
+            _logger.LogInformation("Scrape of CityGross candy initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, zipcode[0].zip, 9);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossDrinks")]
+        public async Task<IActionResult> ScrapeCityGrossDrinks()
+        {
+            _logger.LogInformation("Scrape of CityGross drinks initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBeverage, zipcode[0].zip, 10);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossPrePackageMeal")]
+        public async Task<IActionResult> ScrapeCityGrossPrePackageMeal()
+        {
+            _logger.LogInformation("Scrape of CityGross prepackage initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavReadyMeals, zipcode[0].zip, 11);
 
             return Ok(new
             {
@@ -315,27 +270,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossKids")]
         public async Task<IActionResult> ScrapeCityGrossKids()
         {
-            _logger.LogInformation("Manual scrape of CityGross kids initiated");
+            _logger.LogInformation("Scrape of CityGross kids initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[15], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossGarden")]
-        public async Task<IActionResult> ScrapeCityGrossGarden()
-        {
-            _logger.LogInformation("Manual scrape of CityGross garden initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[16], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavKids, zipcode[0].zip, 12);
 
             return Ok(new
             {
@@ -348,12 +286,13 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("CityGrossHome")]
-        public async Task<IActionResult> ScrapeCityGrossHome()
+        [HttpPost("CityGrossCleaning")]
+        public async Task<IActionResult> ScrapeCityGrossCleaning()
         {
-            _logger.LogInformation("Manual scrape of CityGross home initiated");
+            _logger.LogInformation("Scrape of CityGross cleaning initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[17], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHomeAndCleaning, zipcode[0].zip, 13);
 
             return Ok(new
             {
@@ -366,48 +305,13 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
-        [HttpPost("CityGrossKitchen")]
-        public async Task<IActionResult> ScrapeCityGrossKitchen()
+        [HttpPost("CityGrossHygiene")]
+        public async Task<IActionResult> ScrapeCityGrossHygiene()
         {
-            _logger.LogInformation("Manual scrape of CityGross kitchen initiated");
+            _logger.LogInformation("Scrape of CityGross hygiene initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[18], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossAnimal")]
-        public async Task<IActionResult> ScrapeCityGrossAnimal()
-        {
-            _logger.LogInformation("Manual scrape of CityGross animal initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[19], zipcode[0].zip);
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
-        }
-        [HttpPost("CityGrossPharmacy")]
-        public async Task<IActionResult> ScrapeCityGrossPharmacy()
-        {
-            _logger.LogInformation("Manual scrape of CityGross pharmacy initiated");
-
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[20], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHygien, zipcode[0].zip, 14);
 
             return Ok(new
             {
@@ -423,9 +327,48 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossHealth")]
         public async Task<IActionResult> ScrapeCityGrossHealt()
         {
-            _logger.LogInformation("Manual scrape of CityGross health initiated");
+            _logger.LogInformation("Scrape of CityGross health initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[21], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHealth, zipcode[0].zip, 14);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossPharmacy")]
+        public async Task<IActionResult> ScrapeCityGrossPharmacy()
+        {
+            _logger.LogInformation("Scrape of CityGross pharmacy initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPharmacy, zipcode[0].zip, 15);
+
+            return Ok(new
+            {
+                Success = job.Success,
+                ProductsScraped = job.ProductsScraped,
+                NewProducts = job.NewProducts,
+                UpdatedProducts = job.UpdatedProducts,
+                StartedAt = job.StartedAt,
+                CompletedAt = job.CompletedAt,
+                ErrorMessage = job.ErrorMessage
+            });
+        }
+        [HttpPost("CityGrossAnimal")]
+        public async Task<IActionResult> ScrapeCityGrossAnimal()
+        {
+            _logger.LogInformation("Scrape of CityGross animal initiated");
+            var config = await _configHelper.GetConfig(4);
+
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavAnimals, zipcode[0].zip, 16);
 
             return Ok(new
             {
@@ -441,9 +384,10 @@ namespace PrisApi.Controllers
         [HttpPost("CityGrossTobak")]
         public async Task<IActionResult> ScrapeCityGrossTobak()
         {
-            _logger.LogInformation("Manual scrape of CityGross tobak initiated");
+            _logger.LogInformation("Scrape of CityGross tobak initiated");
+            var config = await _configHelper.GetConfig(4);
 
-            var job = await _scrapingService.ScrapeCityGrossAsync(category[22], zipcode[0].zip);
+            var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavTobacco, zipcode[0].zip, 17);
 
             return Ok(new
             {
@@ -456,5 +400,42 @@ namespace PrisApi.Controllers
                 ErrorMessage = job.ErrorMessage
             });
         }
+        // [HttpPost("CityGrossKitchen")]
+        // public async Task<IActionResult> ScrapeCityGrossKitchen()
+        // {
+        //     _logger.LogInformation("Scrape of CityGross kitchen initiated");
+
+        //     var job = await _scrapingService.ScrapeCityGrossAsync(category[18], zipcode[0].zip);
+
+        //     return Ok(new
+        //     {
+        //         Success = job.Success,
+        //         ProductsScraped = job.ProductsScraped,
+        //         NewProducts = job.NewProducts,
+        //         UpdatedProducts = job.UpdatedProducts,
+        //         StartedAt = job.StartedAt,
+        //         CompletedAt = job.CompletedAt,
+        //         ErrorMessage = job.ErrorMessage
+        //     });
+        // }
+        // [HttpPost("CityGrossGarden")]
+        // public async Task<IActionResult> ScrapeCityGrossGarden()
+        // {
+        //     _logger.LogInformation("Scrape of CityGross garden initiated");
+        //     var config = await _configHelper.GetConfig(4);
+
+        //     var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation., zipcode[0].zip, 18);
+
+        //     return Ok(new
+        //     {
+        //         Success = job.Success,
+        //         ProductsScraped = job.ProductsScraped,
+        //         NewProducts = job.NewProducts,
+        //         UpdatedProducts = job.UpdatedProducts,
+        //         StartedAt = job.StartedAt,
+        //         CompletedAt = job.CompletedAt,
+        //         ErrorMessage = job.ErrorMessage
+        //     });
+        // }
     }
 }

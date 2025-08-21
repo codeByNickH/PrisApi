@@ -5,7 +5,7 @@ namespace PrisApi.Models.Scraping
         public string ID { get; set; }
         public string RawName { get; set; }
         public string RawBrand { get; set; }
-        public string Category { get; set; }
+        public int CategoryId { get; set; }
         public string CountryOfOrigin { get; set; }
         public decimal RawOrdPrice { get; set; }
         public decimal RawDiscountPrice { get; set; }

@@ -12,33 +12,36 @@ namespace PrisApi.Models
         public string Name { get; set; }
         [MaxLength(100)]
         public string Brand { get; set; }
+        [MaxLength(70)]
         public string CountryOfOrigin { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal CurrentPrice { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal? OriginalPrice { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
+        [Column(TypeName = "decimal(9, 2)")]
         public decimal? ComparePrice { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
-        public decimal DiscountPercentage { get; set; }
+        [Column(TypeName = "decimal(5, 2)")]
+        public decimal? DiscountPercentage { get; set; }
         public bool MemberDiscount { get; set; }
-        [MaxLength(20)]
+        [MaxLength(10)]
         public string Unit { get; set; }
-        [Column(TypeName = "decimal(10, 2)")]
-        public decimal Size { get; set; }
+        [Column(TypeName = "decimal(6, 3)")]
+        public decimal? Size { get; set; }
         public string ImageUrl { get; set; }
+        [MaxLength(70)]
         public string MaxQuantity { get; set; }
+        [MaxLength(70)]
         public string MinQuantity { get; set; }
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         [Required]
         public int CategoryId { get; set; }
-        [Required]
-        public int StoreLocationId { get; set; }
         [ForeignKey("CategoryId")]
         public Category Category { get; set; }
-        [ForeignKey("StoreLocationId")]
-        public StoreLocation StoreLocation { get; set; }
+        [Required]
+        public int StoreId { get; set; }
+        [ForeignKey("StoreId")]
+        public Store Store { get; set; }
         public ICollection<PriceHistory> PriceHistory { get; set; }
     }
 }

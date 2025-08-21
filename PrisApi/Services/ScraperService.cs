@@ -9,18 +9,19 @@ namespace PrisApi.Services
     {
         private readonly ILogger<ScraperService> _logger;
         private readonly IScrapeHelper _scrapeHelper;
-        private readonly string category = "-";
-        public ScraperService(IScrapeHelper scrapeHelper, ILogger<ScraperService> logger)
+        private readonly IScrapeConfigHelper _configHelper;
+        public ScraperService(IScrapeHelper scrapeHelper, ILogger<ScraperService> logger, IScrapeConfigHelper configHelper)
         {
             _scrapeHelper = scrapeHelper;
             _logger = logger;
+            _configHelper = configHelper;
         }
 
         public async Task<ScrapingJob> ScrapeWillysOffersAsync(int location)
         {
             var job = new ScrapingJob
             {
-                StoreId = "willys",
+                StoreName = "willys",
                 StartedAt = DateTime.UtcNow
             };
 
@@ -28,7 +29,7 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
 
-                var scraper = new WillysScrapeService(_scrapeHelper);
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
                 var scrapedProducts = await scraper.ScrapeDiscountProductsAsync(location);
 
                 job.ProductsScraped = scrapedProducts.Count;
@@ -56,14 +57,14 @@ namespace PrisApi.Services
         {
             var job = new ScrapingJob
             {
-                StoreId = "ica",
+                StoreName = "ica",
                 StartedAt = DateTime.UtcNow
             };
 
             try
             {
                 _logger.LogInformation("Starting Ica scraping job at {time}", job.StartedAt);
-                
+
                 var scraper = new IcaScrapeService(_scrapeHelper);
                 var scrapedProducts = await scraper.ScrapeDiscountProductsAsync();
 
@@ -89,28 +90,27 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeWillysAsync(string navigation, int location)
+        public async Task<ScrapingJob> ScrapeWillysAsync(string config, int location, int category) // Send config and location instead 
         {
             var job = new ScrapingJob
             {
-                StoreId = "willys",
+                StoreName = "willys",
                 StartedAt = DateTime.UtcNow
             };
 
             try                                                     //  Add a loop on navigation?
             {
-                _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
+                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
+                
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
 
-                var scraper = new WillysScrapeService(_scrapeHelper);
-                var scrapedProducts = await scraper.ScrapeProductsAsync(navigation, location, category);
-
-
+                var scrapedProducts = await scraper.ScrapeProductsAsync(config, location, category);
 
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
 
-                _logger.LogInformation("Willys scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
             }
             catch (Exception ex)
             {
@@ -126,35 +126,64 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeWillysAsync(List<string> navigation, int location)
+        public async Task<ScrapingJob> ScrapeWillysAsync(ScraperConfig config, int location)
         {
             var job = new ScrapingJob
             {
-                StoreId = "willys",
+                StoreName = config.StoreName,
                 StartedAt = DateTime.UtcNow
             };
-
-            try                                                     //  Add a loop on navigation?
+            var navigation = new List<(string navigation, int category)>
             {
-                _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
-                
-                var scraper = new WillysScrapeService(_scrapeHelper);
-                for (int i = 0; i < navigation.Count; i++)
+            (config.ScraperNavigation.NavMeat, 1),
+            (config.ScraperNavigation.NavDairy, 2),
+            (config.ScraperNavigation.NavFruitAndVegetables, 3),
+            (config.ScraperNavigation.NavPantry, 4),
+            (config.ScraperNavigation.NavFrozen, 5),
+            (config.ScraperNavigation.NavBreadAndCookies, 6),
+            (config.ScraperNavigation.NavFishAndSeafood, 7),
+            (config.ScraperNavigation.NavVegetarian, 8),
+            (config.ScraperNavigation.NavIceCreamCandyAndSnacks, 9),
+            (config.ScraperNavigation.NavBeverage, 10),
+            (config.ScraperNavigation.NavReadyMeals, 11),
+            (config.ScraperNavigation.NavKids, 12),
+            (config.ScraperNavigation.NavHomeAndCleaning, 13),
+            (config.ScraperNavigation.NavHealth, 14),
+            (config.ScraperNavigation.NavAnimals, 16),
+            (config.ScraperNavigation.NavTobacco, 17)
+            };
+            if (!string.IsNullOrEmpty(config.ScraperNavigation.NavPharmacy))
+            {
+                navigation.Add((config.ScraperNavigation.NavPharmacy, 15));
+            }
+            if (!string.IsNullOrEmpty(config.ScraperNavigation.NavChark))
+            {
+                navigation.Add((config.ScraperNavigation.NavChark, 1));
+            }
+            if (!string.IsNullOrEmpty(config.ScraperNavigation.NavCheese))
+            {
+                navigation.Add((config.ScraperNavigation.NavCheese, 2));
+            }
+            try                                                     
+            {
+                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
+
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
+                foreach (var nav in navigation) //  Loop triggers to many request so gets blocked, adding Delay to make it work.
                 {
-                    var scrapedProducts = await scraper.ScrapeProductsAsync(navigation[i], location, category);
+                    var scrapedProducts = await scraper.ScrapeProductsAsync(nav.navigation, location, nav.category);
                     job.ProductsScraped += scrapedProducts.Count;
+                    await DelayBetweenRequests();
                 }
-
-
 
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
 
-                _logger.LogInformation("Willys scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Willys scraping");
+                _logger.LogError(ex, "Error during {store} scraping", job.StoreName);
 
                 job.Success = false;
                 job.ErrorMessage = ex.Message;
@@ -166,17 +195,17 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeIcaAsync(string navigation, int location)
+        public async Task<ScrapingJob> ScrapeIcaAsync(string navigation, int location, int category)
         {
             var job = new ScrapingJob
             {
-                StoreId = "ica",
+                StoreName = "ica",
                 StartedAt = DateTime.UtcNow
             };
 
             try
             {
-                _logger.LogInformation("Starting Ica scraping job at {time}", job.StartedAt);
+                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
 
                 var scraper = new IcaScrapeService(_scrapeHelper);
                 var scrapedProducts = await scraper.ScrapeProductsAsync(navigation, location, category);
@@ -187,11 +216,11 @@ namespace PrisApi.Services
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
 
-                _logger.LogInformation("Ica scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Ica scraping");
+                _logger.LogError(ex, "Error during {store} scraping", job.StoreName);
 
                 job.Success = false;
                 job.ErrorMessage = ex.Message;
@@ -203,11 +232,11 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeCoopAsync(string navigation, int location)
+        public async Task<ScrapingJob> ScrapeCoopAsync(string navigation, int location, int category)
         {
             var job = new ScrapingJob
             {
-                StoreId = "coop",
+                StoreName = "coop",
                 StartedAt = DateTime.UtcNow
             };
 
@@ -240,11 +269,11 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeHemkopAsync(string navigation, int location)
+        public async Task<ScrapingJob> ScrapeHemkopAsync(string navigation, int location, int category)
         {
             var job = new ScrapingJob
             {
-                StoreId = "hemkop",
+                StoreName = "hemkop",
                 StartedAt = DateTime.UtcNow
             };
 
@@ -277,11 +306,11 @@ namespace PrisApi.Services
 
             return job;
         }
-        public async Task<ScrapingJob> ScrapeCityGrossAsync(string navigation, int location)
+        public async Task<ScrapingJob> ScrapeCityGrossAsync(string navigation, int location, int category)
         {
             var job = new ScrapingJob
             {
-                StoreId = "citygross",
+                StoreName = "citygross",
                 StartedAt = DateTime.UtcNow
             };
 
@@ -313,6 +342,10 @@ namespace PrisApi.Services
             // await _dbContext.SaveChangesAsync();
 
             return job;
+        }
+        private async Task DelayBetweenRequests(int milliseconds = 20000)
+        {
+            await Task.Delay(milliseconds);
         }
     }
 }
