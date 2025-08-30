@@ -2,33 +2,36 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
 using PrisApi.Helper.IHelper;
+using PrisApi.Models;
 using PrisApi.Models.Scraping;
+using PrisApi.Repository.IRepository;
 
 namespace PrisApi.Services.Scrapers
 {
     public class CitygrossScraperService
     {
-        private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;
+        private readonly IScrapeConfigHelper _scraperConfig;
+        private readonly IRepository<Store> _repository;
         private readonly bool _isCloud;
-        private const string StoreName = "citygross";
-        public CitygrossScraperService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
+        public CitygrossScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, IRepository<Store> repository)
         {
             _scrapeHelper = scrapeHelper;
+            _scraperConfig = scrapeConfig;
+            _repository = repository;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
-            _config = config ?? new ScraperConfig
-            {
-                StoreName = StoreName,
-                BaseUrl = "https://www.citygross.se/",
-                RequestDelayMs = 50,
-                UseJavaScript = true
-            };
+        }
+        private async Task<ScraperConfig> GetConfig()
+        {
+            return await _scraperConfig.GetConfig(4);
         }
         public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
         {
             using var playwright = await Playwright.CreateAsync();
+            var _config = await GetConfig();
+            var storeConfig = await _repository.GetOnFilterAsync(s=>s.StoreLocation.PostalCode == location);
 
             var options = new BrowserTypeLaunchOptions
             {
@@ -106,14 +109,15 @@ namespace PrisApi.Services.Scrapers
                                     var content = await response.TextAsync();
                                     apiResponses.Add(content);
 
-                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
+                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, _config.StoreName, category);
 
                                     foreach (var product in extractedProducts)
                                     {
-                                        if (!processedProductIds.Contains($"{product.RawName} {product.ID}"))
+                                        if (!processedProductIds.Contains($"{product.RawName} {product.ProdCode}"))
                                         {
+                                            product.StoreId = storeConfig.Id;
                                             products.Add(product);
-                                            processedProductIds.Add($"{product.RawName} {product.ID}");
+                                            processedProductIds.Add($"{product.RawName} {product.ProdCode}");
                                             Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
                                         }
                                     }

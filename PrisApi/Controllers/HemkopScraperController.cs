@@ -10,27 +10,6 @@ namespace PrisApi.Controllers
         private readonly ScraperService _scrapingService;
         private readonly ILogger<HemkopScraperController> _logger;
         // 822 31, "Alfta"
-        private readonly List<string> category = [
-            "sortiment/kott-fagel-och-chark",
-            "sortiment/mejeri-ost-och-agg",
-            "sortiment/frukt-och-gront",
-            "sortiment/skafferi",
-            "sortiment/fryst",
-            "sortiment/brod-och-kakor",
-            "sortiment/fisk-och-skaldjur",
-            "sortiment/vegetariskt",
-            "sortiment/glass-godis-och-snacks",
-            "sortiment/dryck",
-            "sortiment/fardigmat",
-            "sortiment/barn",
-            "sortiment/blommor-och-tradgard",
-            "sortiment/hem-och-stad",
-            "sortiment/halsa-och-skonhet",
-            "sortiment/apotek",
-            "sortiment/djur",
-            "sortiment/tobak",
-            "sortiment/kiosk"
-        ];
         public HemkopScraperController(ScraperService scrapingService, ILogger<HemkopScraperController> logger)
         {
             _scrapingService = scrapingService;

@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 using PrisApi.Data;
+using PrisApi.Models;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository.IRepository;
 
@@ -35,7 +36,13 @@ namespace PrisApi.Repository
                 ScraperSelector = c.ScraperSelector
             }).FirstOrDefaultAsync();
         }
-        public Task<ScraperConfig> SaveAsync()
+
+        public Task<List<ScraperConfig>> GetListOnFilterAsync(Expression<Func<ScraperConfig, bool>> filter = null, bool tracked = true)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<ScraperConfig> SaveAsync(ScraperConfig config)
         {
             throw new NotImplementedException();
         }

@@ -8,6 +8,8 @@ using PrisApi.Repository.IRepository;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository;
 using PrisApi.Models;
+using PrisApi.Mapper.IMapper;
+using PrisApi.Mapper;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,7 +44,11 @@ builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<IScrapeHelper, ScrapeHelper>();
 builder.Services.AddScoped<IRepository<ScraperConfig>, ConfigRepository>();
 builder.Services.AddScoped<IRepository<Product>, ProductRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IScrapeConfigHelper, ScrapeConfigHelper>();
+builder.Services.AddScoped<IRepository<StoreLocation>, LocationRepository>();
+builder.Services.AddScoped<IRepository<Store>, StoreRepository>();
+builder.Services.AddScoped<IMapping<Product>, ProductMapping>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

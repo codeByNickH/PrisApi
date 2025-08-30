@@ -190,6 +190,9 @@ namespace PrisApi.Migrations
                     b.Property<DateTime?>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<decimal>("CurrentComparePrice")
+                        .HasColumnType("decimal(9, 2)");
+
                     b.Property<decimal>("CurrentPrice")
                         .HasColumnType("decimal(9, 2)");
 
@@ -218,6 +221,10 @@ namespace PrisApi.Migrations
                     b.Property<decimal?>("OriginalPrice")
                         .HasColumnType("decimal(9, 2)");
 
+                    b.Property<string>("ProdCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
                     b.Property<decimal?>("Size")
                         .HasColumnType("decimal(6, 3)");
 
@@ -230,6 +237,9 @@ namespace PrisApi.Migrations
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("WasDiscount")
+                        .HasColumnType("bit");
 
                     b.HasKey("Id");
 
