@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
 using PrisApi.Helper.IHelper;
+using PrisApi.Models;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository.IRepository;
 
@@ -9,31 +10,179 @@ namespace PrisApi.Services.Scrapers
 {
     public class IcaScrapeService
     {
-        private readonly ScraperConfig _config;
         private readonly bool _isCloud;
-        private readonly IRepository<ScraperConfig> _repository;
-        private const string StoreName = "ica";
+        private readonly IScrapeConfigHelper _configHelper;
         private readonly IScrapeHelper _scrapeHelper;
+        private readonly IRepository<Store> _repository;
         private string ProductListSelector = "[data-promotion-list-name=\"erbjudanden\"]";
-        public IcaScrapeService(IScrapeHelper scrapeHelper, ScraperConfig config = null)
+        public IcaScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper configHelper, IRepository<Store> repository)
         {
             _scrapeHelper = scrapeHelper;
-            
+            _configHelper = configHelper;
+            _repository = repository;
+
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
-
-            _config = config ?? new ScraperConfig
-            {
-                StoreName = StoreName,
-                BaseUrl = "https://handlaprivatkund.ica.se",
-                RequestDelayMs = 50,
-                UseJavaScript = true
-            };
         }
+        private async Task<ScraperConfig> GetConfig()
+        {
+            return await _configHelper.GetConfig(1);
+        }
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        {
+            using var playwright = await Playwright.CreateAsync();
+            var _config = await GetConfig();
+            var storeConfig = await _repository.GetOnFilterAsync(s=>s.StoreLocation.PostalCode == location);
+            
+            var options = new BrowserTypeLaunchOptions
+            {
+                Headless = false,
+                SlowMo = _config.RequestDelayMs
+            };
 
+            if (_isCloud)
+            {
+                options.Args = new[]
+                {
+                    "--disable-gpu",
+                    "--disable-dev-shm-usage",
+                    "--disable-setuid-sandbox",
+                    "--no-sandbox"
+                };
+            }
+
+            await using var browser = await playwright.Chromium.LaunchAsync(options);
+            await using var context = await browser.NewContextAsync();
+            var page = await context.NewPageAsync();
+
+            var products = new List<ScrapedProduct>();
+            var processedProductIds = new HashSet<string>();
+            var apiResponses = new List<string>();
+
+            page.Response += async (sender, response) =>
+            {
+                try
+                {
+                    if (response.Url.Contains("products"))
+                    {
+                        Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
+
+                        if (response.Status == 200)
+                        {
+                            var contentType = response.Headers.ContainsKey("content-type")
+                                ? response.Headers["content-type"]
+                                : "";
+
+                            if (contentType.Contains("application/json"))
+                            {
+                                var content = await response.TextAsync();
+                                apiResponses.Add(content);
+
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, _config.StoreName, category);
+
+                                foreach (var product in extractedProducts)
+                                {
+                                    if (!processedProductIds.Contains($"{product.RawName} {product.ProdCode}"))
+                                    {
+                                        product.StoreId = storeConfig.Id;
+                                        products.Add(product);
+                                        processedProductIds.Add($"{product.RawName} {product.ProdCode}");
+                                        Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error processing response: {ex.Message}");
+                }
+            };
+
+            try
+            {
+                await page.GotoAsync(_config.BaseUrl, new PageGotoOptions
+                {
+                    WaitUntil = WaitUntilState.NetworkIdle
+                });
+
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CookieBannerSelector}]", new PageWaitForSelectorOptions { Timeout = 5000 }); // Cookies
+                await page.ClickAsync($"[{_config.ScraperSelector.RejectCookiesSelector}]");
+
+                await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", location.ToString());
+
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.PickupOptionSelector}]"); // StorePickupOption
+                await page.ClickAsync($"[{_config.ScraperSelector.PickupOptionSelector}]");
+
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");// SelectStore
+                await page.ClickAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");
+
+                await Task.Delay(500);
+
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CategoryNavSelector}]"); // OpenCategoryNav
+                await page.ClickAsync($"[{_config.ScraperSelector.CategoryNavSelector}]");
+
+                await page.WaitForSelectorAsync($"[data-test=\"{navigation}\"]");
+                await page.ClickAsync($"[data-test=\"{navigation}\"]");
+
+                await page.WaitForSelectorAsync("[data-first=\"nav-pane-1\"]");
+                await page.ClickAsync("[data-first=\"nav-pane-1\"]");
+
+                const int maxScrollAttempts = 200;
+                int previousHeight = 0;
+                int noChangeCount = 0;
+                const int maxNoChangeAttempts = 3;
+
+                for (int i = 0; i < maxScrollAttempts; i++)
+                {
+                    var currentHeight = await page.EvaluateAsync<int>("document.documentElement.scrollHeight");
+
+                    if (currentHeight == previousHeight)
+                    {
+                        noChangeCount++;
+                        if (noChangeCount >= maxNoChangeAttempts)
+                        {
+                            Console.WriteLine($"No height change for {maxNoChangeAttempts} attempts - all content likely loaded");
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        noChangeCount = 0;
+                    }
+
+                    await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
+
+                    await Task.Delay(1500);
+
+                    previousHeight = currentHeight;
+                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products found via API: {products.Count}");
+                }
+
+                if (products.Count == 0)
+                {
+                    Console.WriteLine("No products found via API monitoring.");
+                }
+
+                if (apiResponses.Count > 0)
+                {
+                    File.WriteAllText("api_responses_debug.json", string.Join("\n---\n", apiResponses));
+                    Console.WriteLine("API responses saved to api_ica_responses_debug.json for debugging");
+                }
+
+                return products;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
+                throw;
+            }
+        }
         public async Task<List<ScrapedProduct>> ScrapeDiscountProductsAsync()
         {
+            var _config = await GetConfig();
             _config.BaseUrl = "https://www.ica.se/erbjudanden/maxi-ica-stormarknad-bollnas-1051012/";
-
 
             using var playwright = await Playwright.CreateAsync();
 
@@ -113,7 +262,7 @@ namespace PrisApi.Services.Scrapers
                 {
                     var product = new ScrapedProduct
                     {
-                        StoreName = StoreName,
+                        // StoreName = _config.StoreName,
                         ScrapedAt = DateTime.UtcNow
                     };
 
@@ -189,156 +338,6 @@ namespace PrisApi.Services.Scrapers
                         products.Add(product);
                         Console.WriteLine(product?.RawBrand?.ToString() + " " + product.RawName.ToString() + " " + product?.RawUnit?.ToString() + " " + product?.RawOrdPrice.ToString() + " " + product?.RawDiscount.ToString() + " " + product.MaxQuantity.ToString());
                     }
-                }
-
-                return products;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
-                throw;
-            }
-        }
-
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
-        {
-            using var playwright = await Playwright.CreateAsync();
-
-            var options = new BrowserTypeLaunchOptions
-            {
-                Headless = false,
-                SlowMo = _config.RequestDelayMs
-            };
-
-            if (_isCloud)
-            {
-                options.Args = new[]
-                {
-                    "--disable-gpu",
-                    "--disable-dev-shm-usage",
-                    "--disable-setuid-sandbox",
-                    "--no-sandbox"
-                };
-            }
-
-            await using var browser = await playwright.Chromium.LaunchAsync(options);
-            await using var context = await browser.NewContextAsync();
-            var page = await context.NewPageAsync();
-
-            var products = new List<ScrapedProduct>();
-            var processedProductIds = new HashSet<string>();
-            var apiResponses = new List<string>();
-
-            page.Response += async (sender, response) =>
-            {
-                try
-                {
-                    if (response.Url.Contains("products"))
-                    {
-                        Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
-
-                        if (response.Status == 200)
-                        {
-                            var contentType = response.Headers.ContainsKey("content-type")
-                                ? response.Headers["content-type"]
-                                : "";
-
-                            if (contentType.Contains("application/json"))
-                            {
-
-                                var content = await response.TextAsync();
-                                apiResponses.Add(content);
-
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
-                                foreach (var product in extractedProducts)
-                                {
-                                    if (!processedProductIds.Contains($"{product.RawName} {product.ID}"))
-                                    {
-                                        products.Add(product);
-                                        processedProductIds.Add($"{product.RawName} {product.ID}");
-                                        Console.WriteLine($"Extracted from API: {product?.RawBrand} {product?.RawName} {product?.Size}{product?.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product?.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product?.MemberDiscount}");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Error processing response: {ex.Message}");
-                }
-            };
-
-            try
-            {
-                await page.GotoAsync(_config.BaseUrl, new PageGotoOptions
-                {
-                    WaitUntil = WaitUntilState.NetworkIdle
-                });
-
-                await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]", new PageWaitForSelectorOptions { Timeout = 5000 }); // Cookies
-                await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
-
-                await page.WaitForSelectorAsync("input[class=\"svelte-vapldk\"]"); // SearchStore
-                await page.FillAsync("input[class=\"svelte-vapldk\"]", location.ToString());
-
-                await page.WaitForSelectorAsync("[data-automation-id=\"store-selector-view-pickup\"]"); // StorePickupOption
-                await page.ClickAsync("[data-automation-id=\"store-selector-view-pickup\"]");
-
-                await page.WaitForSelectorAsync("[class=\"store-item__column svelte-uogeuo\"]");// SelectStore
-                await page.ClickAsync("[class=\"store-item__column svelte-uogeuo\"]");
-
-                await Task.Delay(500);
-
-                await page.WaitForSelectorAsync("[id=\"nav-menu-button\"]"); // OpenCategoryNav
-                await page.ClickAsync("[id=\"nav-menu-button\"]");
-
-                await page.WaitForSelectorAsync($"[data-test=\"{navigation}\"]");
-                await page.ClickAsync($"[data-test=\"{navigation}\"]");
-
-                await page.WaitForSelectorAsync("[data-first=\"nav-pane-1\"]");
-                await page.ClickAsync("[data-first=\"nav-pane-1\"]");
-
-                const int maxScrollAttempts = 200;
-                int previousHeight = 0;
-                int noChangeCount = 0;
-                const int maxNoChangeAttempts = 3;
-
-                for (int i = 0; i < maxScrollAttempts; i++)
-                {
-                    var currentHeight = await page.EvaluateAsync<int>("document.documentElement.scrollHeight");
-
-                    if (currentHeight == previousHeight)
-                    {
-                        noChangeCount++;
-                        if (noChangeCount >= maxNoChangeAttempts)
-                        {
-                            Console.WriteLine($"No height change for {maxNoChangeAttempts} attempts - all content likely loaded");
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        noChangeCount = 0;
-                    }
-
-                    await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
-
-                    await Task.Delay(1500);
-
-                    previousHeight = currentHeight;
-                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products found via API: {products.Count}");
-                }
-
-                if (products.Count == 0)
-                {
-                    Console.WriteLine("No products found via API monitoring.");
-                }
-
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_ica_responses_debug.json for debugging");
                 }
 
                 return products;

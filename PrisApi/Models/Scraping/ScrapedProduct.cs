@@ -2,7 +2,7 @@ namespace PrisApi.Models.Scraping
 {
     public class ScrapedProduct
     {
-        public string ID { get; set; }
+        public string ProdCode { get; set; }
         public string RawName { get; set; }
         public string RawBrand { get; set; }
         public int CategoryId { get; set; }
@@ -19,8 +19,8 @@ namespace PrisApi.Models.Scraping
         public decimal Size { get; set; }
         public byte DepositPrice { get; set; }
         public string ImageSrc { get; set; }
-        public string StoreName { get; set; }
-        public int StoreLocation { get; set; }
+        public int StoreId { get; set; }
+        // public int StoreLocationId { get; set; }
         public string MaxQuantity { get; set; }
         public string MinQuantity { get; set; }
         public decimal TotalPrice { get; set; }

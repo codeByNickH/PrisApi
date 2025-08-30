@@ -1,6 +1,8 @@
 using PrisApi.Helper.IHelper;
+using PrisApi.Mapper.IMapper;
 using PrisApi.Models;
 using PrisApi.Models.Scraping;
+using PrisApi.Repository.IRepository;
 using PrisApi.Services.Scrapers;
 
 namespace PrisApi.Services
@@ -10,11 +12,17 @@ namespace PrisApi.Services
         private readonly ILogger<ScraperService> _logger;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _configHelper;
-        public ScraperService(IScrapeHelper scrapeHelper, ILogger<ScraperService> logger, IScrapeConfigHelper configHelper)
+        private readonly IProductRepository _repository;
+        private readonly IRepository<Store> _sRepository;
+        private readonly IMapping<Product> _mapping;
+        public ScraperService(IScrapeHelper scrapeHelper, ILogger<ScraperService> logger, IScrapeConfigHelper configHelper, IProductRepository repository, IRepository<Store> sRepository, IMapping<Product> mapping)
         {
             _scrapeHelper = scrapeHelper;
             _logger = logger;
             _configHelper = configHelper;
+            _repository = repository;
+            _sRepository = sRepository;
+            _mapping = mapping;
         }
 
         public async Task<ScrapingJob> ScrapeWillysOffersAsync(int location)
@@ -29,7 +37,7 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Willys scraping job at {time}", job.StartedAt);
 
-                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeDiscountProductsAsync(location);
 
                 job.ProductsScraped = scrapedProducts.Count;
@@ -47,12 +55,8 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
             }
 
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
             return job;
         }
-
         public async Task<ScrapingJob> ScrapeIcaOffersAsync()
         {
             var job = new ScrapingJob
@@ -65,7 +69,7 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Ica scraping job at {time}", job.StartedAt);
 
-                var scraper = new IcaScrapeService(_scrapeHelper);
+                var scraper = new IcaScrapeService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeDiscountProductsAsync();
 
 
@@ -85,9 +89,6 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
             }
 
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
             return job;
         }
         public async Task<ScrapingJob> ScrapeWillysAsync(string config, int location, int category) // Send config and location instead 
@@ -102,10 +103,14 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
                 
-                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
-
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeProductsAsync(config, location, category);
+                
+                var mappedProducts = await _mapping.ToProduct(scrapedProducts);
+                var savedProduct = await _repository.SaveAsync(mappedProducts);
 
+                job.NewProducts = savedProduct[0];
+                job.UpdatedProducts = savedProduct[1];
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
@@ -120,9 +125,6 @@ namespace PrisApi.Services
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
             }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
 
             return job;
         }
@@ -168,7 +170,7 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
 
-                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper);
+                var scraper = new WillysScrapeService(_scrapeHelper, _configHelper, _sRepository);
                 foreach (var nav in navigation) //  Loop triggers to many request so gets blocked, adding Delay to make it work.
                 {
                     var scrapedProducts = await scraper.ScrapeProductsAsync(nav.navigation, location, nav.category);
@@ -190,9 +192,6 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
             }
 
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
             return job;
         }
         public async Task<ScrapingJob> ScrapeIcaAsync(string navigation, int location, int category)
@@ -207,11 +206,14 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
 
-                var scraper = new IcaScrapeService(_scrapeHelper);
+                var scraper = new IcaScrapeService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeProductsAsync(navigation, location, category);
 
+                var mappedProducts = await _mapping.ToProduct(scrapedProducts);
+                var savedProduct = await _repository.SaveAsync(mappedProducts);
 
-
+                job.NewProducts = savedProduct[0];
+                job.UpdatedProducts = savedProduct[1];
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
@@ -227,9 +229,6 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
             }
 
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
             return job;
         }
         public async Task<ScrapingJob> ScrapeCoopAsync(string navigation, int location, int category)
@@ -244,11 +243,14 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting Coop scraping job at {time}", job.StartedAt);
 
-                var scraper = new CoopScraperService(_scrapeHelper);
+                var scraper = new CoopScraperService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeProductsAsync(navigation, location, category);
 
+                var mappedProducts = await _mapping.ToProduct(scrapedProducts);
+                var savedProduct = await _repository.SaveAsync(mappedProducts);
 
-
+                job.NewProducts = savedProduct[0];
+                job.UpdatedProducts = savedProduct[1];
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
@@ -263,9 +265,6 @@ namespace PrisApi.Services
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
             }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
 
             return job;
         }
@@ -301,28 +300,28 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
             }
 
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
-
             return job;
         }
         public async Task<ScrapingJob> ScrapeCityGrossAsync(string navigation, int location, int category)
         {
             var job = new ScrapingJob
             {
-                StoreName = "citygross",
+                StoreName = "city gross",
                 StartedAt = DateTime.UtcNow
             };
 
             try
             {
-                _logger.LogInformation("Starting CityGross scraping job at {time}", job.StartedAt);
+                _logger.LogInformation("Starting City Gross scraping job at {time}", job.StartedAt);
 
-                var scraper = new CitygrossScraperService(_scrapeHelper);
+                var scraper = new CitygrossScraperService(_scrapeHelper, _configHelper, _sRepository);
                 var scrapedProducts = await scraper.ScrapeProductsAsync(navigation, location, category);
 
+                var mappedProducts = await _mapping.ToProduct(scrapedProducts);
+                var savedProduct = await _repository.SaveAsync(mappedProducts);
 
-
+                job.NewProducts = savedProduct[0];
+                job.UpdatedProducts = savedProduct[1];
                 job.ProductsScraped = scrapedProducts.Count;
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
@@ -337,9 +336,6 @@ namespace PrisApi.Services
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
             }
-
-            // _dbContext.ScrapingJobs.Add(job);
-            // await _dbContext.SaveChangesAsync();
 
             return job;
         }

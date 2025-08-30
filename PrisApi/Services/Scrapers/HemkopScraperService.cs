@@ -111,7 +111,7 @@ namespace PrisApi.Services.Scrapers
                 {
                     var product = new ScrapedProduct
                     {
-                        StoreName = StoreName,
+                        // StoreName = StoreName,
                         ScrapedAt = DateTime.UtcNow
                     };
 
@@ -255,10 +255,10 @@ namespace PrisApi.Services.Scrapers
 
                                 foreach (var product in extractedProducts)
                                 {
-                                    if (!processedProductIds.Contains($"{product.RawName} {product.ID}"))
+                                    if (!processedProductIds.Contains($"{product.RawName} {product.ProdCode}"))
                                     {
                                         products.Add(product);
-                                        processedProductIds.Add($"{product.RawName} {product.ID}");
+                                        processedProductIds.Add($"{product.RawName} {product.ProdCode}");
                                         Console.WriteLine($"Extracted from API: {product.RawBrand} {product.RawName} {product.Size}{product.RawUnit} {product?.RawOrdPrice}kr {product?.RawDiscountPrice}kr {product?.RawDiscount}kr {product?.OrdJmfPrice}kr/{product?.RawUnit} {product?.DiscountJmfPrice}kr/{product?.RawUnit} {product?.DiscountPer}kr/{product?.RawUnit} {product.MinQuantity} {product?.TotalPrice}kr {product?.MaxQuantity} {product.MemberDiscount}");
                                     }
                                 }

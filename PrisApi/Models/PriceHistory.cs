@@ -17,5 +17,5 @@ public class PriceHistory
     [MaxLength(10)]
     public string CompareUnit { get; set; }
     public bool WasDiscount { get; set; } = false;
-    public DateTime RecordedAt { get; set; } = DateTime.UtcNow;
+    public DateTime RecordedAt { get; set; }
 }
