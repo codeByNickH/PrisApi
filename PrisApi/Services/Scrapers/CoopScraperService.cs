@@ -12,15 +12,12 @@ namespace PrisApi.Services.Scrapers
     {
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
-        private readonly IRepository<Store> _repository;
         private readonly bool _isCloud;
-        private const string StoreName = "coop";
 
-        public CoopScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, IRepository<Store> repository)
+        public CoopScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
         {
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
-            _repository = repository;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
@@ -29,12 +26,12 @@ namespace PrisApi.Services.Scrapers
         {
             return await _scraperConfig.GetConfig(3);
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, Store storeConfig)
         {
             using var playwright = await Playwright.CreateAsync();
             var _config = await GetConfig();
-            var storeConfig = await _repository.GetOnFilterAsync(s=>s.StoreLocation.PostalCode == location);
-
+            var name = storeConfig.Name.ToLower()?.Split(' ', 2)[0] == "stora" ? storeConfig.Name.ToLower()?.Split(' ', 2)[1] : storeConfig.Name.ToLower();
+            System.Console.WriteLine(_config.ScraperSelector.SearchButtonSelector);
             var options = new BrowserTypeLaunchOptions
             {
                 Headless = false,
@@ -73,35 +70,36 @@ namespace PrisApi.Services.Scrapers
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
 
-                await page.WaitForSelectorAsync("[id=\"cmpbox\"]"); // CookieBanner
-                await page.ClickAsync("[id=\"cmpwelcomebtnno\"]"); // RejectCookies
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CookieBannerSelector}]"); // CookieBanner
+                await page.ClickAsync($"[{_config.ScraperSelector.RejectCookiesSelector}]"); // RejectCookies
 
                 await Task.Delay(500);
 
-                await page.WaitForSelectorAsync("[class=\"eJadUlKd\"]"); // OpenChooseStore
-                await page.ClickAsync("[class=\"eJadUlKd\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]"); // OpenChooseStore
+                await page.ClickAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]");
 
-                await page.WaitForSelectorAsync("input[placeholder=\"Ange ditt postnummer\"]"); // SearchStore
-                await page.FillAsync("input[placeholder=\"Ange ditt postnummer\"]", location.ToString());
+                await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", storeConfig.StoreLocation.PostalCode.ToString());
                 await Task.Delay(3000);
-                await page.WaitForSelectorAsync("[class=\"gUGSFhfR UhM7Xoea ucdesrxw qfkHWAKt\"]"); // SearchButton
-                await page.ClickAsync("[class=\"gUGSFhfR UhM7Xoea ucdesrxw qfkHWAKt\"]");
+
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SearchButtonSelector}]"); // SearchButton
+                await page.ClickAsync($"[{_config.ScraperSelector.SearchButtonSelector}]");
 
                 try
                 {
-                    await page.WaitForSelectorAsync("[data-key=\"pickup\"]", new PageWaitForSelectorOptions { Timeout = 2000 }); // StorePickupOption
-                    await page.ClickAsync("[data-key=\"pickup\"]", new PageClickOptions { Timeout = 500 });
+                    await page.WaitForSelectorAsync($"[{_config.ScraperSelector.PickupOptionSelector}]", new PageWaitForSelectorOptions { Timeout = 2000 }); // StorePickupOption
+                    await page.ClickAsync($"[{_config.ScraperSelector.PickupOptionSelector}]", new PageClickOptions { Timeout = 500 });
                 }
                 catch
                 {
                     Console.WriteLine("No home delivery option detected, continuing..");
                 }
 
-                await page.WaitForSelectorAsync("[class=\"yWvaV7fj\"]"); // SelectStore
-                await page.ClickAsync("[class=\"yWvaV7fj\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]"); // SelectStore
+                await page.ClickAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");
 
-                await page.WaitForSelectorAsync("[class=\"gUGSFhfR CkqGWkRo ucdesrxw qfkHWAKt\"]"); // CloseChooseTab
-                await page.ClickAsync("[class=\"gUGSFhfR CkqGWkRo ucdesrxw qfkHWAKt\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]"); // CloseChooseTab
+                await page.ClickAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]");
 
 
                 page.Response += async (sender, response) =>
@@ -124,7 +122,7 @@ namespace PrisApi.Services.Scrapers
                                     var content = await response.TextAsync();
                                     apiResponses.Add(content);
 
-                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
+                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, name);
 
                                     foreach (var product in extractedProducts)
                                     {
@@ -160,7 +158,7 @@ namespace PrisApi.Services.Scrapers
 
                         if (buttonExists)
                         {
-                            await Task.Delay(500);
+                            await Task.Delay(1500);
                             await page.ClickAsync(loadMoreButtonSelector, new PageClickOptions { Force = true });
                             Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
                             j++;
@@ -179,11 +177,11 @@ namespace PrisApi.Services.Scrapers
                     }
                 }
 
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_coop_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_coop_responses_debug.json for debugging");
-                }
+                // if (apiResponses.Count > 0)
+                // {
+                //     File.WriteAllText("api_coop_responses_debug.json", string.Join("\n---\n", apiResponses));
+                //     Console.WriteLine("API responses saved to api_coop_responses_debug.json for debugging");
+                // }
 
                 return products;
             }

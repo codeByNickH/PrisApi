@@ -131,6 +131,32 @@ namespace PrisApi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PrisApi.Models.CategoryList", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("StoreId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("CategoryLists");
+                });
+
             modelBuilder.Entity("PrisApi.Models.PriceHistory", b =>
                 {
                     b.Property<int>("Id")
@@ -177,9 +203,6 @@ namespace PrisApi.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
                     b.Property<decimal?>("ComparePrice")
                         .HasColumnType("decimal(9, 2)");
 
@@ -187,7 +210,7 @@ namespace PrisApi.Migrations
                         .HasMaxLength(70)
                         .HasColumnType("nvarchar(70)");
 
-                    b.Property<DateTime?>("CreatedAt")
+                    b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<decimal>("CurrentComparePrice")
@@ -226,7 +249,7 @@ namespace PrisApi.Migrations
                         .HasColumnType("nvarchar(100)");
 
                     b.Property<decimal?>("Size")
-                        .HasColumnType("decimal(6, 3)");
+                        .HasColumnType("decimal(7, 3)");
 
                     b.Property<int>("StoreId")
                         .HasColumnType("int");
@@ -242,8 +265,6 @@ namespace PrisApi.Migrations
                         .HasColumnType("bit");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
 
                     b.HasIndex("StoreId");
 
@@ -325,7 +346,7 @@ namespace PrisApi.Migrations
                             RequestDelayMs = 50,
                             ScraperNavigationId = 4,
                             ScraperSelectorId = 4,
-                            StoreName = "citygross",
+                            StoreName = "city gross",
                             UseJavaScript = false
                         },
                         new
@@ -445,9 +466,9 @@ namespace PrisApi.Migrations
                             NavBreadAndCookies = "Bröd & Kakor",
                             NavDairy = "Mejeri & Ost",
                             NavFishAndSeafood = "Fisk & Skaldjur",
-                            NavFrozen = "Fyst",
+                            NavFrozen = "Fryst",
                             NavFruitAndVegetables = "Frukt & Grönt",
-                            NavHealth = "Apotek, Skönhet & Hälsa",
+                            NavHealth = "Apotek, Hälsa & Skönhet",
                             NavHomeAndCleaning = "Städ, Tvätt & Papper",
                             NavIceCreamCandyAndSnacks = "Glass, Godis & Snacks",
                             NavKids = "Barn",
@@ -671,6 +692,10 @@ namespace PrisApi.Migrations
 
                     b.Property<DateTime>("StartedAt")
                         .HasColumnType("datetime2");
+
+                    b.Property<string>("StoreLocation")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("StoreName")
                         .HasMaxLength(50)
@@ -1071,6 +1096,25 @@ namespace PrisApi.Migrations
                         });
                 });
 
+            modelBuilder.Entity("PrisApi.Models.CategoryList", b =>
+                {
+                    b.HasOne("PrisApi.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PrisApi.Models.Product", "Product")
+                        .WithMany("Categories")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("PrisApi.Models.PriceHistory", b =>
                 {
                     b.HasOne("PrisApi.Models.Product", null)
@@ -1082,19 +1126,11 @@ namespace PrisApi.Migrations
 
             modelBuilder.Entity("PrisApi.Models.Product", b =>
                 {
-                    b.HasOne("PrisApi.Models.Category", "Category")
-                        .WithMany()
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("PrisApi.Models.Store", "Store")
                         .WithMany("Products")
                         .HasForeignKey("StoreId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Category");
 
                     b.Navigation("Store");
                 });
@@ -1131,6 +1167,8 @@ namespace PrisApi.Migrations
 
             modelBuilder.Entity("PrisApi.Models.Product", b =>
                 {
+                    b.Navigation("Categories");
+
                     b.Navigation("PriceHistory");
                 });
 

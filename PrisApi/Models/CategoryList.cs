@@ -8,11 +8,15 @@ namespace PrisApi.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
+        [Required]
         public int ProductId { get; set; }
         [ForeignKey("ProductId")]
         public Product Product { get; set; }
+        [Required]
         public int CategoryId { get; set; }
         [ForeignKey("CategoryId")]
         public Category Category { get; set; }
+        [Required]
+        public int StoreId { get; set; }
     }
 }

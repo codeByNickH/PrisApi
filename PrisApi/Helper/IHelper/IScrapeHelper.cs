@@ -5,11 +5,11 @@ namespace PrisApi.Helper.IHelper
 {
     public interface IScrapeHelper
     {
-        Task<List<ScrapedProduct>> ExtractProductsFromJson(string jsonContent, string storeName, int category);
+        Task<List<ScrapedProduct>> ExtractProductsFromJson(string jsonContent, string storeName);
         List<JsonElement> FindProductElements(JsonElement root);
         void SearchForProductArrays(JsonElement element, List<JsonElement> products);
         bool IsLikelyProduct(JsonElement element);
-        Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeName, int category);
+        Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeName);
         string GetStringProperty(JsonElement element, params string[] propertyNames);
     }
 }

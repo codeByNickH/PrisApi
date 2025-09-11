@@ -19,19 +19,6 @@ namespace PrisApi.Controllers
         private readonly IScrapeConfigHelper _configHelper;
         private readonly IRepository<Store> _locationRepository;
         private readonly AppDbContext _dbContext;
-        private readonly List<(int zip, string city)> zipcode = [
-            (82136, "Bollnäs"),
-            (81835, "Gävle Valbo"),
-            (75323, "Uppsala"),
-            (85753,"Sundsvall"),
-            (90621,"Ersboda, Umeå"),
-            (97345, "Storheden, Luleå"),
-            (16867, "Bromma, Stockholm"),
-            (12630, "Västberga, Stockholm"),
-            (41730, "Backaplan, Göteborg"),
-            (43633, "Sisjön, Göteborg"),
-            (23234, "Burlöv, Malmö")
-        ];
         public CoopScraperController(ScraperService scraperService, ILogger<CoopScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext)
         {
             _scraperService = scraperService;
@@ -40,6 +27,24 @@ namespace PrisApi.Controllers
             _locationRepository = locationRepository;
             _dbContext = dbContext;
         }
+        // [HttpPost("CoopSpices")]
+        // public async Task<ActionResult<APIResponse>> ScrapeCoopSpices() kryddor-smaksattare | Add on Pantry category?
+        // {
+        //     _logger.LogInformation("Scrape of Coop spices initiated");
+        //   var config = await _configHelper.GetConfig(3);
+        //   var location = await _locationRepository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+
+        //   var jobList = new List<ScrapingJob>();
+        //   foreach (var loc in location)
+        //   {
+        //      var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavSpices, loc.zip, 4);
+        //      job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+        //      jobList.Add(job);
+        //      await _dbContext.ScrapingJobs.AddAsync(job);
+        //      await _dbContext.SaveChangesAsync();
+        //   }
+        //   return ResponseHelper.CreateApiResponse(jobList);
+        // }
         [HttpPost("CoopMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopMeat()
         {
@@ -50,12 +55,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavMeat, loc.StoreLocation.PostalCode, 1);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavMeat, loc, 1);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList); // Add store location to scraping job city/district
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopDairy()
@@ -67,12 +73,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavDairy, loc.StoreLocation.PostalCode, 2);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavDairy, loc, 2);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopCheese")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopCheese()
@@ -84,12 +91,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavCheese, loc.StoreLocation.PostalCode, 2);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavCheese, loc, 2);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFruit()
@@ -101,12 +109,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFruitAndVegetables, loc.StoreLocation.PostalCode, 3);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopPantry()
@@ -118,12 +127,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavPantry, loc.StoreLocation.PostalCode, 4);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavPantry, loc, 4);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFrozen()
@@ -135,12 +145,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFrozen, loc.StoreLocation.PostalCode, 5);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFrozen, loc, 5);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopBread")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopBread()
@@ -152,12 +163,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBreadAndCookies, loc.StoreLocation.PostalCode, 6);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopFish")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFish()
@@ -169,12 +181,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFishAndSeafood, loc.StoreLocation.PostalCode, 7);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopVege")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopVege()
@@ -186,12 +199,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavVegetarian, loc.StoreLocation.PostalCode, 8);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopSnacks()
@@ -203,12 +217,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc.StoreLocation.PostalCode, 9);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopDrinks()
@@ -220,12 +235,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBeverage, loc.StoreLocation.PostalCode, 10);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavBeverage, loc, 10);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopPrePackageMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopPrePackageMeal()
@@ -237,12 +253,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavReadyMeals, loc.StoreLocation.PostalCode, 11);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopKids")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopKids()
@@ -254,12 +271,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavKids, loc.StoreLocation.PostalCode, 12);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavKids, loc, 12);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopCleaning()
@@ -271,29 +289,31 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHomeAndCleaning, loc.StoreLocation.PostalCode, 13);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
-        [HttpPost("CoopHealth")]
-        public async Task<ActionResult<APIResponse>> ScrapeCoopHealth()
+        [HttpPost("CoopPharmacy")]
+        public async Task<ActionResult<APIResponse>> ScrapeCoopPharmacy()
         {
-            _logger.LogInformation("Scrape of Coop health initiated");
+            _logger.LogInformation("Scrape of Coop pharmacy initiated");
             var config = await _configHelper.GetConfig(3);
             var location = await _locationRepository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
 
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHealth, loc.StoreLocation.PostalCode, 14);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavPharmacy, loc, 14);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopHygien")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopHygien()
@@ -305,12 +325,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHygien, loc.StoreLocation.PostalCode, 14);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavHygien, loc, 14);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopAnimal()
@@ -322,12 +343,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavAnimals, loc.StoreLocation.PostalCode, 16);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavAnimals, loc, 16);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CoopTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopTobak()
@@ -339,22 +361,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavTobacco, loc.StoreLocation.PostalCode, 17);
+                var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavTobacco, loc, 17);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
-        // [HttpPost("CoopSpices")]
-        // public async Task<ActionResult<APIResponse>> ScrapeCoopSpices()
-        // {
-        //     _logger.LogInformation("Scrape of Coop spices initiated");
-
-        //   var config = await _configHelper.GetConfig(3);
-        //   var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavMeat, loc.zip, 1);
-
-        //     return ResponseExtention.CreateResponse(job);
-        // }
     }
 }

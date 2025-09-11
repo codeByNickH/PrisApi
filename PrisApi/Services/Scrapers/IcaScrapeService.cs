@@ -13,13 +13,11 @@ namespace PrisApi.Services.Scrapers
         private readonly bool _isCloud;
         private readonly IScrapeConfigHelper _configHelper;
         private readonly IScrapeHelper _scrapeHelper;
-        private readonly IRepository<Store> _repository;
         private string ProductListSelector = "[data-promotion-list-name=\"erbjudanden\"]";
-        public IcaScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper configHelper, IRepository<Store> repository)
+        public IcaScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper configHelper)
         {
             _scrapeHelper = scrapeHelper;
             _configHelper = configHelper;
-            _repository = repository;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
         }
@@ -27,12 +25,11 @@ namespace PrisApi.Services.Scrapers
         {
             return await _configHelper.GetConfig(1);
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, Store storeConfig)
         {
             using var playwright = await Playwright.CreateAsync();
             var _config = await GetConfig();
-            var storeConfig = await _repository.GetOnFilterAsync(s=>s.StoreLocation.PostalCode == location);
-            
+
             var options = new BrowserTypeLaunchOptions
             {
                 Headless = false,
@@ -77,7 +74,7 @@ namespace PrisApi.Services.Scrapers
                                 var content = await response.TextAsync();
                                 apiResponses.Add(content);
 
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, _config.StoreName, category);
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, storeConfig.Name.ToLower()?.Split(' ', 2)[0]);
 
                                 foreach (var product in extractedProducts)
                                 {
@@ -110,7 +107,7 @@ namespace PrisApi.Services.Scrapers
                 await page.ClickAsync($"[{_config.ScraperSelector.RejectCookiesSelector}]");
 
                 await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
-                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", location.ToString());
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", storeConfig.StoreLocation.PostalCode.ToString());
 
                 await page.WaitForSelectorAsync($"[{_config.ScraperSelector.PickupOptionSelector}]"); // StorePickupOption
                 await page.ClickAsync($"[{_config.ScraperSelector.PickupOptionSelector}]");
@@ -154,7 +151,7 @@ namespace PrisApi.Services.Scrapers
 
                     await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
 
-                    await Task.Delay(1500);
+                    await Task.Delay(2500);
 
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products found via API: {products.Count}");
@@ -165,11 +162,11 @@ namespace PrisApi.Services.Scrapers
                     Console.WriteLine("No products found via API monitoring.");
                 }
 
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_ica_responses_debug.json for debugging");
-                }
+                // if (apiResponses.Count > 0)
+                // {
+                //     File.WriteAllText("api_responses_debug.json", string.Join("\n---\n", apiResponses));
+                //     Console.WriteLine("API responses saved to api_ica_responses_debug.json for debugging");
+                // }
 
                 return products;
             }

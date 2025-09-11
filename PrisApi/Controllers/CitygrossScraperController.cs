@@ -19,9 +19,6 @@ namespace PrisApi.Controllers
         private readonly IScrapeConfigHelper _configHelper;
         private readonly IRepository<Store> _locationRepository;
         private readonly AppDbContext _dbContext;
-        private readonly List<(int zip, string city)> zipcode = [
-            (80293, "Gävle Ingenjörsgatan 15"),
-        ];
         public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext)
         {
             _scrapingService = scraperService;
@@ -40,12 +37,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavMeat, loc.StoreLocation.PostalCode, 1);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavMeat, loc, 1);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossDeli")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDeli()
@@ -57,12 +55,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavChark, loc.StoreLocation.PostalCode, 1);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavChark, loc, 1);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDairy()
@@ -74,12 +73,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavDairy, loc.StoreLocation.PostalCode, 2);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavDairy, loc, 2);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFruit()
@@ -91,12 +91,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFruitAndVegetables, loc.StoreLocation.PostalCode, 3);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPantry()
@@ -108,12 +109,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPantry, loc.StoreLocation.PostalCode, 4);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPantry, loc, 4);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFrozen()
@@ -125,12 +127,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFrozen, loc.StoreLocation.PostalCode, 5);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFrozen, loc, 5);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossBread")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossBread()
@@ -142,12 +145,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBreadAndCookies, loc.StoreLocation.PostalCode, 6);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossFish")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFish()
@@ -159,12 +163,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFishAndSeafood, loc.StoreLocation.PostalCode, 7);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossVege")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossVege()
@@ -176,12 +181,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavVegetarian, loc.StoreLocation.PostalCode, 8);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossSnacks()
@@ -193,12 +199,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavSnacks, loc.StoreLocation.PostalCode, 9);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavSnacks, loc, 9);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossCandy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossCandy()
@@ -210,12 +217,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc.StoreLocation.PostalCode, 9);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDrinks()
@@ -227,12 +235,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBeverage, loc.StoreLocation.PostalCode, 10);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBeverage, loc, 10);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossPrePackageMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPrePackageMeal()
@@ -244,12 +253,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavReadyMeals, loc.StoreLocation.PostalCode, 11);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossKids")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossKids()
@@ -261,12 +271,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavKids, loc.StoreLocation.PostalCode, 12);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavKids, loc, 12);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossCleaning()
@@ -278,12 +289,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHomeAndCleaning, loc.StoreLocation.PostalCode, 13);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossHygiene")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossHygiene()
@@ -295,12 +307,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHygien, loc.StoreLocation.PostalCode, 14);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHygien, loc, 14);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossHealt()
@@ -312,12 +325,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHealth, loc.StoreLocation.PostalCode, 14);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHealth, loc, 14);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossPharmacy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPharmacy()
@@ -329,12 +343,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPharmacy, loc.StoreLocation.PostalCode, 15);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPharmacy, loc, 15);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossAnimal()
@@ -346,12 +361,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavAnimals, loc.StoreLocation.PostalCode, 16);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavAnimals, loc, 16);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("CityGrossTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossTobak()
@@ -363,12 +379,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavTobacco, loc.StoreLocation.PostalCode, 17);
+                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavTobacco, loc, 17);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         // [HttpPost("CityGrossKitchen")]
         // public async Task<IActionResult> ScrapeCityGrossKitchen()

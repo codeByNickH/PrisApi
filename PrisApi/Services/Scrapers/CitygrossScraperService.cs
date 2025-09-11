@@ -12,13 +12,11 @@ namespace PrisApi.Services.Scrapers
     {
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
-        private readonly IRepository<Store> _repository;
         private readonly bool _isCloud;
-        public CitygrossScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, IRepository<Store> repository)
+        public CitygrossScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
         {
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
-            _repository = repository;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
@@ -27,12 +25,11 @@ namespace PrisApi.Services.Scrapers
         {
             return await _scraperConfig.GetConfig(4);
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, Store storeConfig)
         {
             using var playwright = await Playwright.CreateAsync();
             var _config = await GetConfig();
-            var storeConfig = await _repository.GetOnFilterAsync(s=>s.StoreLocation.PostalCode == location);
-
+            
             var options = new BrowserTypeLaunchOptions
             {
                 Headless = false,
@@ -70,30 +67,30 @@ namespace PrisApi.Services.Scrapers
                     WaitUntil = WaitUntilState.NetworkIdle
                 });
 
-                await page.WaitForSelectorAsync("[id=\"CybotCookiebotDialog\"]");
-                await page.ClickAsync("[id=\"CybotCookiebotDialogBodyButtonDecline\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CookieBannerSelector}]");
+                await page.ClickAsync($"[{_config.ScraperSelector.RejectCookiesSelector}]");
 
-                await page.WaitForSelectorAsync("[class=\"c-change-delivery-link\"]");
-                await page.ClickAsync("[class=\"c-change-delivery-link\"]");
+                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]");
+                await page.ClickAsync($"[{_config.ScraperSelector.ChooseStoreSelector}]");
 
-                await page.WaitForSelectorAsync("input[placeholder=\"Sök butik eller stad\"]");
-                await page.FillAsync("input[placeholder=\"Sök butik eller stad\"]", location.ToString());
+                await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]");
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", storeConfig.StoreLocation.PostalCode.ToString());
 
-                await page.WaitForSelectorAsync("//*[@id='root']/div[2]/div/div/div/div[2]/div/div[4]/div");
-                await page.ClickAsync("//*[@id='root']/div[2]/div/div/div/div[2]/div/div[4]/div");
+                await page.WaitForSelectorAsync($"{_config.ScraperSelector.SelectStoreSelector}");
+                await page.ClickAsync($"{_config.ScraperSelector.SelectStoreSelector}");
 
-                await page.WaitForSelectorAsync("//*[@id='root']/div[2]/div/div/div/div[2]/div/div[5]/button");
-                await page.ClickAsync("//*[@id='root']/div[2]/div/div/div/div[2]/div/div[5]/button");
+                await page.WaitForSelectorAsync($"{_config.ScraperSelector.CloseChooseTabSelector}");
+                await page.ClickAsync($"{_config.ScraperSelector.CloseChooseTabSelector}");
 
-                await page.WaitForSelectorAsync("a[href=\"/matvaror\"]");
-                await page.ClickAsync("a[href=\"/matvaror\"]");
+                await page.WaitForSelectorAsync($"a[{_config.ScraperSelector.CategoryNavSelector}]");
+                await page.ClickAsync($"a[{_config.ScraperSelector.CategoryNavSelector}]");
                 await Task.Delay(500);
 
                 page.Response += async (sender, response) =>
                 {
                     try
                     {
-                        if (response.Url.Contains("products?") && response.Url.Contains("%"))
+                        if (response.Url.Contains("products?"))
                         {
                             Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
 
@@ -109,7 +106,7 @@ namespace PrisApi.Services.Scrapers
                                     var content = await response.TextAsync();
                                     apiResponses.Add(content);
 
-                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, _config.StoreName, category);
+                                    var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, storeConfig.Name.ToLower());
 
                                     foreach (var product in extractedProducts)
                                     {
@@ -154,7 +151,7 @@ namespace PrisApi.Services.Scrapers
                             Console.WriteLine($"Successfully clicked page {currentPage} button using XPath ({i + 1}/{maxLoadMoreAttempts}). Products found: {products.Count}");
                             nextPage++;
                             currentPage++;
-                            await Task.Delay(500);
+                            await Task.Delay(1500);
                         }
                         else if (nextPage <= 1)
                         {
@@ -175,11 +172,11 @@ namespace PrisApi.Services.Scrapers
                     }
                 }
 
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_citygross_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_citygross_responses_debug.json for debugging");
-                }
+                // if (apiResponses.Count > 0)
+                // {
+                //     File.WriteAllText("api_citygross_responses_debug.json", string.Join("\n---\n", apiResponses));
+                //     Console.WriteLine("API responses saved to api_citygross_responses_debug.json for debugging");
+                // }
 
                 return products;
             }
