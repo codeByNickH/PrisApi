@@ -32,6 +32,8 @@ builder.Services.AddSingleton(_ =>
     }
 });
 
+builder.Configuration.AddEnvironmentVariables();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found")
@@ -54,20 +56,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 
-// builder.Services.AddCors(options =>
-// {
-//     options.AddPolicy("AllowAll",
-//         builder =>
-//         {
-//             builder.AllowAnyOrigin()
-//                    .AllowAnyMethod()
-//                    .AllowAnyHeader();
-//         });
-// });
-
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -76,10 +66,6 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// Enable CORS if needed
-app.UseCors("AllowAll");
-
-// Add this line to enable controller routing
 app.MapControllers();
 
 app.Run();

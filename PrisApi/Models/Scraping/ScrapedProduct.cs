@@ -20,7 +20,6 @@ namespace PrisApi.Models.Scraping
         public byte DepositPrice { get; set; }
         public string ImageSrc { get; set; }
         public int StoreId { get; set; }
-        // public int StoreLocationId { get; set; }
         public string MaxQuantity { get; set; }
         public string MinQuantity { get; set; }
         public decimal TotalPrice { get; set; }

@@ -7,6 +7,8 @@ public class ScrapingJob
     public Guid Id { get; set; } = Guid.NewGuid();
     [MaxLength(50)]
     public string StoreName { get; set; }
+    [MaxLength(100)]
+    public string StoreLocation { get; set; } // city/district
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
     public bool Success { get; set; }

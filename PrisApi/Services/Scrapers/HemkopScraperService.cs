@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.Playwright;
 using PrisApi.Helper.IHelper;
+using PrisApi.Models;
 using PrisApi.Models.Scraping;
 
 namespace PrisApi.Services.Scrapers
@@ -197,7 +198,7 @@ namespace PrisApi.Services.Scrapers
                 throw;
             }
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, Store storeConfig)
         {
             using var playwright = await Playwright.CreateAsync();
 
@@ -251,7 +252,7 @@ namespace PrisApi.Services.Scrapers
                                 var content = await response.TextAsync();
                                 apiResponses.Add(content);
 
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName, category);
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, StoreName);
 
                                 foreach (var product in extractedProducts)
                                 {

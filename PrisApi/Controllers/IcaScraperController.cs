@@ -19,16 +19,6 @@ namespace PrisApi.Controllers
         private readonly IRepository<Store> _repository;
         private readonly IScrapeConfigHelper _configHelper;
         private readonly AppDbContext _dbContext;
-        private readonly List<(int zip, string city)> Zipcode = [
-            (82141, "Bollnäs"),
-            (80293, "Gävle Hemlingby Köpcentrum"),
-            (75267, "Uppsala Stenhagen"),
-            (0, ""),
-            (0, ""),
-            (0, ""),
-            (0, ""),
-            (0, ""),
-        ];
         public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> repository, AppDbContext dbContext)
         {
             _scraperService = scraperService;
@@ -36,24 +26,6 @@ namespace PrisApi.Controllers
             _configHelper = configHelper;
             _repository = repository;
             _dbContext = dbContext;
-        }
-        [HttpPost("IcaOffers")] // Add location on this
-        public async Task<IActionResult> ScrapeIcaOffers()
-        {
-            _logger.LogInformation("Scrape of Ica offers initiated");
-
-            var job = await _scraperService.ScrapeIcaOffersAsync();
-
-            return Ok(new
-            {
-                Success = job.Success,
-                ProductsScraped = job.ProductsScraped,
-                NewProducts = job.NewProducts,
-                UpdatedProducts = job.UpdatedProducts,
-                StartedAt = job.StartedAt,
-                CompletedAt = job.CompletedAt,
-                ErrorMessage = job.ErrorMessage
-            });
         }
         [HttpPost("IcaMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaMeat()
@@ -65,13 +37,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavMeat, loc.StoreLocation.PostalCode, 1);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavMeat, loc, 1);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
 
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaDariy")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDariy()
@@ -83,12 +56,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavDairy, loc.StoreLocation.PostalCode, 2);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavDairy, loc, 2);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFruit()
@@ -100,12 +74,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFruitAndVegetables, loc.StoreLocation.PostalCode, 3);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPantry()
@@ -117,12 +92,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavPantry, loc.StoreLocation.PostalCode, 4);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavPantry, loc, 4);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFrozen()
@@ -134,12 +110,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFrozen, loc.StoreLocation.PostalCode, 5);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFrozen, loc, 5);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaBread")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaBread()
@@ -151,12 +128,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBreadAndCookies, loc.StoreLocation.PostalCode, 6);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaFish")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFish()
@@ -168,12 +146,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFishAndSeafood, loc.StoreLocation.PostalCode, 7);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaVege")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaVege()
@@ -185,12 +164,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavVegetarian, loc.StoreLocation.PostalCode, 8);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaSnacks()
@@ -202,12 +182,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc.StoreLocation.PostalCode, 9);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDrinks()
@@ -219,12 +200,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBeverage, loc.StoreLocation.PostalCode, 10);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBeverage, loc, 10);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaPrePackagedMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPrePackagedMeal()
@@ -236,12 +218,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavReadyMeals, loc.StoreLocation.PostalCode, 11);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaKids")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaKids()
@@ -253,12 +236,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavKids, loc.StoreLocation.PostalCode, 12);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavKids, loc, 12);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaCleaning()
@@ -270,12 +254,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHomeAndCleaning, loc.StoreLocation.PostalCode, 13);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaHealth()
@@ -287,12 +272,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHealth, loc.StoreLocation.PostalCode, 14);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHealth, loc, 14);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaAnimal()
@@ -304,12 +290,13 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavAnimals, loc.StoreLocation.PostalCode, 16);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavAnimals, loc, 16);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
         [HttpPost("IcaTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaTobak()
@@ -321,13 +308,34 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavTobacco, loc.StoreLocation.PostalCode, 17);
+                var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavTobacco, loc, 17);
+                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
                 jobList.Add(job);
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseExtention.CreateResponse(jobList);
+            return ResponseHelper.CreateApiResponse(jobList);
         }
+
+        // [HttpPost("IcaOffers")] // Add location on this
+        // public async Task<IActionResult> ScrapeIcaOffers()
+        // {
+        //     _logger.LogInformation("Scrape of Ica offers initiated");
+
+        //     var job = await _scraperService.ScrapeIcaOffersAsync();
+
+        //     return Ok(new
+        //     {
+        //         Success = job.Success,
+        //         ProductsScraped = job.ProductsScraped,
+        //         NewProducts = job.NewProducts,
+        //         UpdatedProducts = job.UpdatedProducts,
+        //         StartedAt = job.StartedAt,
+        //         CompletedAt = job.CompletedAt,
+        //         ErrorMessage = job.ErrorMessage
+        //     });
+        // }
+
         // [HttpPost("IcaKitchen")]
         // public async Task<IActionResult> ScrapeIcaKitchen()
         // {
@@ -346,6 +354,7 @@ namespace PrisApi.Controllers
         //         ErrorMessage = job.ErrorMessage
         //     });
         // }
+
         // [HttpPost("IcaTraining")]
         // public async Task<IActionResult> ScrapeIcaTraining()
         // {
@@ -364,6 +373,7 @@ namespace PrisApi.Controllers
         //         ErrorMessage = job.ErrorMessage
         //     });
         // }
+
         // [HttpPost("IcaGarden")]
         // public async Task<IActionResult> ScrapeIcaGarden()
         // {

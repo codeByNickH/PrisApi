@@ -8,7 +8,7 @@ namespace PrisApi.Helper
 {
     public class ScrapeHelper : IScrapeHelper
     {
-        public async Task<List<ScrapedProduct>> ExtractProductsFromJson(string jsonContent, string storeName, int category)
+        public async Task<List<ScrapedProduct>> ExtractProductsFromJson(string jsonContent, string storeName)
         {
             var products = new List<ScrapedProduct>();
 
@@ -30,7 +30,7 @@ namespace PrisApi.Helper
                     foreach (var productProp in productDict.EnumerateObject())
                     {
                         var productElement = productProp.Value;
-                        var product = await ExtractProductFromElement(productElement, storeName, category);
+                        var product = await ExtractProductFromElement(productElement, storeName);
                         if (product != null && !string.IsNullOrEmpty(product.RawName))
                         {
                             products.Add(product);
@@ -47,7 +47,7 @@ namespace PrisApi.Helper
                 {
                     foreach (var item in items.EnumerateArray())
                     {
-                        var product = await ExtractProductFromElement(item, storeName, category); // Call new ExtractCoopProd....() ?
+                        var product = await ExtractProductFromElement(item, storeName); // Call new ExtractCoopProd....() ?
                         if (product != null && !string.IsNullOrEmpty(product.RawName))
                         {
                             products.Add(product);
@@ -62,7 +62,7 @@ namespace PrisApi.Helper
 
                 foreach (var element in productElements)
                 {
-                    var product = await ExtractProductFromElement(element, storeName, category);
+                    var product = await ExtractProductFromElement(element, storeName);
                     if (product != null && !string.IsNullOrEmpty(product.RawName))
                     {
                         products.Add(product);
@@ -164,12 +164,12 @@ namespace PrisApi.Helper
             return matchCount >= 2;
         }
 
-        public async Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeName, int category) // Add a SizeUnit and have other as PriceUnit?  // Add Pack for Drinks  // Make one for each store and make call in FromJson() with switch on storeid?
+        public async Task<ScrapedProduct> ExtractProductFromElement(JsonElement element, string storeName) // Add a SizeUnit and have other as PriceUnit?  // Add Pack for Drinks  // Make one for each store and make call in FromJson() with switch on storeid?
         {
             var product = new ScrapedProduct
             {
                 // StoreName = storeName,
-                CategoryId = category,
+                // CategoryId = category,
                 ScrapedAt = DateTime.UtcNow
             };
 
@@ -189,6 +189,7 @@ namespace PrisApi.Helper
                         }
                         if (element.TryGetProperty("packSizeDescription", out var sizeDesc) && sizeDesc.ValueKind == JsonValueKind.String && !sizeDesc.ToString().Contains("-") && product.Size == 0)
                         {
+                            // if tvättmedel change
                             product.Size = ParseDecimal(Regex.Replace(sizeDesc.ToString(), "[a-zA-Z]", ""));
                         }
 
@@ -209,12 +210,14 @@ namespace PrisApi.Helper
                             if (price.TryGetProperty("unit", out var unit) && unit.ValueKind == JsonValueKind.Object)
                             {
                                 product.RawUnit = GetStringProperty(unit, "label")
-                                    ?.Replace("without.liquid", "")
-                                    ?.Replace("litre.without.deposit", "L")
-                                    ?.Replace("fop.price.per.", "")
-                                    ?.Replace("fop.price.per.litre", "L")
-                                    ?.Replace("fop.price.per.drinkable", "L")
-                                    ?.Replace("each", "st");
+                                    .Replace("without.liquid", "")
+                                    .Replace("drinkable.", "")
+                                    .Replace("litre.without.deposit", "l")
+                                    .Replace("fop.price.per.litre", "l")
+                                    .Replace("fop.price.per.drinkable.", "l")
+                                    .Replace("fop.price.per.wash", "")
+                                    .Replace("fop.price.per.", "")
+                                    .Replace("each", "st");
                                 if (unit.TryGetProperty("original", out var originalUnit) && originalUnit.ValueKind == JsonValueKind.Object)
                                 {
                                     icaOriginalJmfPrice = ParseDecimal(GetStringProperty(originalUnit, "amount"));
@@ -242,12 +245,14 @@ namespace PrisApi.Helper
                                 if (element.TryGetProperty("unitPrice", out var unitPrice) && unitPrice.ValueKind == JsonValueKind.Object)
                                 {
                                     product.RawUnit = GetStringProperty(unitPrice, "unit")
-                                        ?.Replace("without.liquid", "")
-                                        ?.Replace("litre.without.deposit", "L")
-                                        ?.Replace("fop.price.per.", "")
-                                        ?.Replace("fop.price.per.litre", "L")
-                                        ?.Replace("fop.price.per.drinkable", "L")
-                                        ?.Replace("each", "st");
+                                        .Replace("without.liquid", "")
+                                        .Replace("drinkable.", "")
+                                        .Replace("litre.without.deposit", "l")
+                                        .Replace("fop.price.per.litre", "l")
+                                        .Replace("fop.price.per.drinkable.", "l")
+                                        .Replace("fop.price.per.wash", "")
+                                        .Replace("fop.price.per.", "")
+                                        .Replace("each", "st");
                                     if (unitPrice.TryGetProperty("price", out var priceInnerObj) && priceInnerObj.ValueKind == JsonValueKind.Object)
                                     {
                                         product.OrdJmfPrice = ParseDecimal(GetStringProperty(priceInnerObj, "amount"));
@@ -374,7 +379,10 @@ namespace PrisApi.Helper
                         {
                             product.HasDiscount = true;
                         }
-
+                        if (string.IsNullOrEmpty(product.MaxQuantity))
+                        {
+                            product.MaxQuantity = "Inget max antal";
+                        }
                         // product.ImageSrc = GetStringProperty(element, "image", "imageUrl", "imageSrc", "productImage");
 
                         product.ProdCode = GetStringProperty(element, "retailerProductId");
@@ -391,12 +399,6 @@ namespace PrisApi.Helper
                             product.CountryOfOrigin = GetStringProperty(origin[0], "value");
                         }
 
-                        //  "countryOfOriginCodes": [
-        //                     {
-        //                         "code": "752",
-        //                         "value": "Sverige"
-        //                     }
-        //                 ],
                         string packageSizeUnit = GetStringProperty(element, "packageSizeUnit");
                         if (!string.IsNullOrEmpty(packageSizeUnit) && product.Size != 0)
                         {
@@ -404,7 +406,7 @@ namespace PrisApi.Helper
                             {
                                 product.Size /= 100m;
                             }
-                            else if (packageSizeUnit.ToLower().Contains("gr") || packageSizeUnit.ToLower().Contains("milli"))
+                            else if (packageSizeUnit.ToLower().Contains("gr") || packageSizeUnit.ToLower().Contains("milli") || packageSizeUnit.Contains("ml") || packageSizeUnit.Contains("MMT") || packageSizeUnit.Contains("MLT"))
                             {
                                 product.Size /= 1000m;
                             }
@@ -415,11 +417,19 @@ namespace PrisApi.Helper
                         //     product.ImageSrc = GetStringProperty(imageObj, "url");
                         // }
 
-                        product.RawOrdPrice = ParseDecimal(GetStringProperty(element, "piecePrice"));
+                        product.RawOrdPrice = Math.Round(ParseDecimal(GetStringProperty(element, "piecePrice")), 2);
 
                         string coopDiscPrice = GetStringProperty(element, "promotionPrice");
                         string coopOrdComparePrice = GetStringProperty(element, "comparativePrice");
-                        string coopComparePriceUnit = GetStringProperty(element, "comparativePriceText")?.Replace("kr/", "").Replace("utan sås/spad", "");
+                        string coopComparePriceUnit = GetStringProperty(element, "comparativePriceText")?.Replace("kr/", "").Replace("utan sås/spad", "").Replace("lit drickfärdig", "l");
+                        if (element.TryGetProperty("comparativePriceUnit", out var coopUnit) && coopUnit.ValueKind == JsonValueKind.Object)
+                        {
+                            coopComparePriceUnit = GetStringProperty(coopUnit, "unit")
+                                .Replace("liter", "l")
+                                .Replace("meter", "m")
+                                .Replace("styck", "st");
+                        }
+
                         product.RawUnit = coopComparePriceUnit;
 
                         // "variances": [
@@ -439,10 +449,10 @@ namespace PrisApi.Helper
                         //         "b2bPrice": 17.77
                         //     }
                         //  },
-                        //  {
+
                         if (!string.IsNullOrEmpty(coopOrdComparePrice) && !string.IsNullOrEmpty(coopComparePriceUnit))
                         {
-                            product.OrdJmfPrice = ParseDecimal(coopOrdComparePrice);
+                            product.OrdJmfPrice = Math.Round(ParseDecimal(coopOrdComparePrice), 2);
                         }
 
                         if (product.OrdJmfPrice == 0)
@@ -458,22 +468,22 @@ namespace PrisApi.Helper
 
                             if (string.IsNullOrEmpty(coopDiscPrice))
                             {
-                                product.RawDiscountPrice = ParseDecimal(GetStringProperty(firstPromo, "price"));
+                                product.RawDiscountPrice = Math.Round(ParseDecimal(GetStringProperty(firstPromo, "price")), 2);
                             }
                             else
                             {
-                                product.RawDiscountPrice = ParseDecimal(coopDiscPrice);
+                                product.RawDiscountPrice = Math.Round(ParseDecimal(coopDiscPrice), 2);
                             }
 
                             if (firstPromo.TryGetProperty("comparativePrice", out var discJmfPrice) &&
                                 discJmfPrice.ValueKind == JsonValueKind.Object)
                             {
-                                product.DiscountJmfPrice = ParseDecimal(GetStringProperty(discJmfPrice, "b2cPrice"));
+                                product.DiscountJmfPrice = Math.Round(ParseDecimal(GetStringProperty(discJmfPrice, "b2cPrice")), 2);
                             }
 
                             var requiredAmount = GetStringProperty(firstPromo, "numberOfProductRequired");
 
-                            decimal savingsPer = product.OrdJmfPrice - product.DiscountJmfPrice;
+                            decimal savingsPer = Math.Round(product.OrdJmfPrice - product.DiscountJmfPrice, 2);
                             product.DiscountPer = Math.Round(savingsPer, 2);
 
                             if (string.IsNullOrEmpty(requiredAmount))
@@ -486,7 +496,7 @@ namespace PrisApi.Helper
                                 product.RawDiscountPrice = Math.Round(product.RawDiscountPrice / i, 2);
                                 product.MinQuantity = $"{i} för";
                                 product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
-                                product.TotalPrice = ParseDecimal(GetStringProperty(firstPromo, "price"));
+                                product.TotalPrice = Math.Round(ParseDecimal(GetStringProperty(firstPromo, "price")), 2);
                             }
 
                             if (firstPromo.TryGetProperty("maxNumberOfUseWithUnit", out var redeemLimit) &&
@@ -634,16 +644,42 @@ namespace PrisApi.Helper
                         }
 
                         product.RawOrdPrice = ParseDecimal(GetStringProperty(element, "priceValue"));
-                        if (GetStringProperty(element, "depositPrice") != "")
+                        if (!string.IsNullOrEmpty(GetStringProperty(element, "depositPrice")))
                         {
                             byte.TryParse(Regex.Replace(GetStringProperty(element, "depositPrice"), "[^0-9 .]", ""), out byte deposit);
                             product.DepositPrice = deposit;
                         }
-                        string displayVolume = GetStringProperty(element, "displayVolume");
+                        string displayVolume = GetStringProperty(element, "displayVolume"); // Sort out this whole size caos,
                         if (displayVolume.Contains("p") || displayVolume.Contains("x") && !displayVolume.Contains("gx") && !displayVolume.Contains("stx"))
                         {
                             string[] checkedForPack = displayVolume.Contains("p") ? displayVolume.Split("p", 2) : displayVolume.Split("x", 2);
-                            product.Size = !string.IsNullOrEmpty(checkedForPack[1]) ? decimal.Parse(Regex.Replace(checkedForPack[1], "[a-zA-Z /]", "")) : 0;
+                            decimal sizeWeight;
+                            if (displayVolume.Contains("p"))
+                            {
+                                if (checkedForPack[0].Contains("+"))
+                                {
+                                    checkedForPack[0] = checkedForPack[0].Substring(1, checkedForPack[0].Length - 1);
+                                }
+                                sizeWeight = decimal.Parse(Regex.Replace(checkedForPack[0], "[a-zA-Z /]", ""));
+                            }
+                            else
+                            {
+                                sizeWeight = decimal.Parse(Regex.Replace(checkedForPack[1], "[a-zA-Z /]", ""));
+                            }
+
+                            if (displayVolume.Contains("x"))
+                            {
+                                product.Size = Math.Round(sizeWeight * decimal.Parse(Regex.Replace(checkedForPack[0], "[a-zA-Z /]", "")), 2);
+                                if (product.RawName.Contains("Snus"))
+                                {
+                                    product.RawOrdPrice /= sizeWeight;
+                                    product.Size /= 1000;
+                                }
+                            }
+                            else
+                            {
+                                product.Size = sizeWeight;
+                            }
                         }
                         else if (displayVolume.Contains("gx") || displayVolume.Contains("stx"))
                         {
@@ -660,7 +696,7 @@ namespace PrisApi.Helper
                             string[] checkedForMixingDrink = displayVolume.Split("/", 2);
                             product.Size = decimal.Parse(Regex.Replace(checkedForMixingDrink[0], "[a-zA-Z /]", ""));
                         }
-                        else if (displayVolume != "")
+                        else if (!string.IsNullOrEmpty(displayVolume))
                         {
                             if (displayVolume.Contains("/"))
                             {
@@ -670,11 +706,11 @@ namespace PrisApi.Helper
                             decimal.TryParse(Regex.Replace(displayVolume, "[^0-9 , .]", ""), out decimal volume);
                             product.Size = volume != 0m ? volume : ParseDecimal(Regex.Replace(displayVolume, "[^0-9 , .]", ""));
                         }
-                        if (displayVolume.Contains("cl"))
+                        if (product.Size > 0 && displayVolume.Contains("cl"))
                         {
                             product.Size /= 100m;
                         }
-                        if (displayVolume.Contains('g') && !displayVolume.Contains("kg") || displayVolume.Contains("ml"))
+                        if (product.Size > 0 && displayVolume.Contains('g') && !displayVolume.Contains("kg") || displayVolume.Contains("ml"))
                         {
                             product.Size /= 1000m;
                         }
@@ -689,12 +725,12 @@ namespace PrisApi.Helper
                         {
                             product.OrdJmfPrice = decimal.Parse(Regex.Replace(comparePrice, "[a-zA-z /]", ""));
                         }
-                        else
+                        else if (string.IsNullOrEmpty(comparePrice) && product.Size > 0m)
                         {
                             product.OrdJmfPrice = Math.Round(product.RawOrdPrice / product.Size, 2);
                             // product.RawUnit = "kg";
                         }
-                        if (product.RawOrdPrice == product.OrdJmfPrice && category != 3)
+                        if (product.RawOrdPrice == product.OrdJmfPrice && product.Size > 0m && !product.RawName.Contains("Damastduk"))
                         {
                             product.RawOrdPrice = Math.Round(product.OrdJmfPrice * product.Size, 2);
                         }
@@ -712,15 +748,15 @@ namespace PrisApi.Helper
                                 product.RawDiscountPrice = Math.Round(ParseDecimal(GetStringProperty(willysPromoPrice, "value")), 2);
                             }
                             string discComparePrice = GetStringProperty(firstPromo, "comparePrice");
-                            if (discComparePrice != "")
+                            if (!string.IsNullOrEmpty(discComparePrice))
                             {
                                 product.DiscountJmfPrice = decimal.Parse(Regex.Replace(discComparePrice, "[a-zA-Z /]", ""));
                             }
-                            else
+                            else if (string.IsNullOrEmpty(discComparePrice) && product.Size > 0m)
                             {
                                 product.DiscountJmfPrice = Math.Round(product.RawDiscountPrice / product.Size, 2);
                             }
-                            if (product.RawDiscountPrice == product.DiscountJmfPrice)
+                            if (product.RawDiscountPrice == product.DiscountJmfPrice && product.Size > 0m)
                             {
                                 product.RawDiscountPrice = Math.Round(product.DiscountJmfPrice * product.Size, 2);
                             }
@@ -728,7 +764,7 @@ namespace PrisApi.Helper
                             string conditionLabel = !string.IsNullOrEmpty(GetStringProperty(firstPromo, "conditionLabelFormatted")) ? GetStringProperty(firstPromo, "conditionLabelFormatted") : GetStringProperty(firstPromo, "conditionLabel");
                             decimal savings = Math.Round(ParseDecimal(GetStringProperty(element, "savingsAmount")), 2);
 
-                            if (conditionLabel.Contains("för"))
+                            if (conditionLabel.Contains("för") && !conditionLabel.Contains("Handla"))
                             {
                                 decimal totalPrice = decimal.Parse(Regex.Replace(GetStringProperty(firstPromo, "rewardLabel"), "[a-zA-Z /]", ""));
                                 product.RawDiscount = savings;
@@ -792,10 +828,14 @@ namespace PrisApi.Helper
                         product.CountryOfOrigin = GetStringProperty(element, "countryOfOrigin");
                         string descriptiveSize = GetStringProperty(element, "descriptiveSize");
 
-                        if (element.TryGetProperty("image", out var citygrossImageObj) && citygrossImageObj.ValueKind == JsonValueKind.Object)
+                        if (product.RawBrand.Contains("BUTIKSSTYCKAT"))
                         {
-                            product.ImageSrc = GetStringProperty(citygrossImageObj, "url");
+                            product.CountryOfOrigin = "Sverige";
                         }
+                        // if (element.TryGetProperty("image", out var citygrossImageObj) && citygrossImageObj.ValueKind == JsonValueKind.Object)
+                        // {
+                        //     product.ImageSrc = GetStringProperty(citygrossImageObj, "url");
+                        // }
 
                         decimal weightInKg = 0;
                         if (element.TryGetProperty("netContent", out var cityWeight) &&
@@ -912,15 +952,16 @@ namespace PrisApi.Helper
                                 }
                             }
 
-                            if (string.IsNullOrEmpty(product.MaxQuantity))
-                            {
-                                product.MaxQuantity = "Inget max antal";
-                            }
                         }
 
                         if (product.RawDiscount != 0)
                         {
                             product.HasDiscount = true;
+                        }
+
+                        if (string.IsNullOrEmpty(product.MaxQuantity))
+                        {
+                            product.MaxQuantity = "Inget max antal";
                         }
 
                         product.ProdCode = GetStringProperty(element, "id");

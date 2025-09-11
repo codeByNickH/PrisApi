@@ -15,13 +15,11 @@ namespace PrisApi.Services.Scrapers
         private readonly bool _isCloud;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
-        private readonly IRepository<Store> _repository;
         private string ProductListSelector = "[data-testid=\"product\"]";
-        public WillysScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, IRepository<Store> repository)
+        public WillysScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
         {
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
-            _repository = repository;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
@@ -30,16 +28,15 @@ namespace PrisApi.Services.Scrapers
         {
             return await _scraperConfig.GetConfig(2);
         }
-        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, int location, int category)
+        public async Task<List<ScrapedProduct>> ScrapeProductsAsync(string navigation, Store storeConfig)
         {
             using var playwright = await Playwright.CreateAsync();
             var _config = await GetConfig();
-            var storeConfig = await _repository.GetOnFilterAsync(s=>s.Name == _config.StoreName && s.StoreLocation.PostalCode == location);
 
             var options = new BrowserTypeLaunchOptions
             {
                 Headless = false,
-                SlowMo = _config.RequestDelayMs
+                SlowMo = _config.RequestDelayMs,
             };
 
             if (_isCloud)
@@ -62,7 +59,6 @@ namespace PrisApi.Services.Scrapers
             var page = await context.NewPageAsync();
 
             var products = new List<ScrapedProduct>();
-            var test = new List<Product>();
             var processedProductIds = new HashSet<string>();
             var apiResponses = new List<string>();
 
@@ -86,7 +82,7 @@ namespace PrisApi.Services.Scrapers
                                 var content = await response.TextAsync();
                                 apiResponses.Add(content);
 
-                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, _config.StoreName, category);
+                                var extractedProducts = await _scrapeHelper.ExtractProductsFromJson(content, storeConfig.Name.ToLower());
 
                                 foreach (var product in extractedProducts)
                                 {
@@ -127,7 +123,7 @@ namespace PrisApi.Services.Scrapers
                 await page.ClickAsync($"[{_config.ScraperSelector.PickupOptionSelector}]");
 
                 await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
-                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", location.ToString());
+                await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", storeConfig.StoreLocation.PostalCode.ToString());
 
                 await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]"); // SelectStore
                 await page.ClickAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");
@@ -169,17 +165,17 @@ namespace PrisApi.Services.Scrapers
                     }
 
                     await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
-                    await Task.Delay(500);
+                    await Task.Delay(2500);
 
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products scraped: {products.Count}");
                 }
 
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_willys_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_willys_responses_debug.json for debugging");
-                }
+                // if (apiResponses.Count > 0)
+                // {
+                //     File.WriteAllText("api_willys_responses_debug.json", string.Join("\n---\n", apiResponses));
+                //     Console.WriteLine("API responses saved to api_willys_responses_debug.json for debugging");
+                // }
 
                 return products;
             }

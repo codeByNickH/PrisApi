@@ -5,6 +5,6 @@ namespace PrisApi.Repository.IRepository
 {
     public interface IProductRepository
     {
-        Task<List<int>> SaveAsync(List<Product> data);
+        Task<List<int>> SaveAsync(List<Product> data, int categoryId);
     }
 }
