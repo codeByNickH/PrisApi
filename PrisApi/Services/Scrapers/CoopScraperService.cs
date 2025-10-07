@@ -34,7 +34,7 @@ namespace PrisApi.Services.Scrapers
             System.Console.WriteLine(_config.ScraperSelector.SearchButtonSelector);
             var options = new BrowserTypeLaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 SlowMo = _config.RequestDelayMs
             };
 
@@ -158,7 +158,7 @@ namespace PrisApi.Services.Scrapers
 
                         if (buttonExists)
                         {
-                            await Task.Delay(1500);
+                            await Task.Delay(9500);
                             await page.ClickAsync(loadMoreButtonSelector, new PageClickOptions { Force = true });
                             Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
                             j++;

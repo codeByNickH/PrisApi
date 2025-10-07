@@ -40,10 +40,6 @@ namespace PrisApi.Models
         public DateTime CreatedAt { get; set; }
         public DateTime? UpdatedAt { get; set; }
         public ICollection<CategoryList> Categories { get; set; }
-        // [Required]
-        // public int CategoryId { get; set; } // Change to CategoryList to manage products like frozen chicken which match with category meat and frozen
-        // [ForeignKey("CategoryId")]
-        // public Category Category { get; set; }
         [Required]
         public int StoreId { get; set; }
         [ForeignKey("StoreId")]
