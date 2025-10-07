@@ -32,7 +32,7 @@ namespace PrisApi.Services.Scrapers
             
             var options = new BrowserTypeLaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 SlowMo = _config.RequestDelayMs
             };
 
@@ -151,7 +151,7 @@ namespace PrisApi.Services.Scrapers
                             Console.WriteLine($"Successfully clicked page {currentPage} button using XPath ({i + 1}/{maxLoadMoreAttempts}). Products found: {products.Count}");
                             nextPage++;
                             currentPage++;
-                            await Task.Delay(1500);
+                            await Task.Delay(10000);
                         }
                         else if (nextPage <= 1)
                         {

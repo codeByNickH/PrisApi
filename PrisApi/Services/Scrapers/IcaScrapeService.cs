@@ -32,7 +32,7 @@ namespace PrisApi.Services.Scrapers
 
             var options = new BrowserTypeLaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 SlowMo = _config.RequestDelayMs
             };
 
@@ -151,7 +151,7 @@ namespace PrisApi.Services.Scrapers
 
                     await page.EvaluateAsync("window.scrollTo(0, document.documentElement.scrollHeight)");
 
-                    await Task.Delay(2500);
+                    await Task.Delay(10000);
 
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products found via API: {products.Count}");

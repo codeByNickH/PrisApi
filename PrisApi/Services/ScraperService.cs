@@ -85,6 +85,7 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
 
                 _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
+                await DelayBetweenRequests();
             }
             catch (Exception ex)
             {
@@ -122,6 +123,7 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
 
                 _logger.LogInformation("Coop scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                await DelayBetweenRequests();
             }
             catch (Exception ex)
             {
@@ -191,6 +193,7 @@ namespace PrisApi.Services
                 job.CompletedAt = DateTime.UtcNow;
 
                 _logger.LogInformation("CityGross scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                await DelayBetweenRequests();
             }
             catch (Exception ex)
             {
