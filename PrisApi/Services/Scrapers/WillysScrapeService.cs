@@ -141,7 +141,7 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync($"a[href=\"{navigation}\"]");
                 await page.ClickAsync($"a[href=\"{navigation}\"]");
 
-                const int maxScrollAttempts = 200;
+                const int maxScrollAttempts = 3;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;

@@ -144,7 +144,7 @@ namespace PrisApi.Services.Scrapers
                     }
                 };
                 int j = 2;
-                const int maxLoadMoreAttempts = 30;
+                const int maxLoadMoreAttempts = 3;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {
@@ -176,12 +176,6 @@ namespace PrisApi.Services.Scrapers
                         break;
                     }
                 }
-
-                // if (apiResponses.Count > 0)
-                // {
-                //     File.WriteAllText("api_coop_responses_debug.json", string.Join("\n---\n", apiResponses));
-                //     Console.WriteLine("API responses saved to api_coop_responses_debug.json for debugging");
-                // }
 
                 return products;
             }

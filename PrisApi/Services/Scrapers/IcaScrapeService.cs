@@ -126,7 +126,7 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync("[data-first=\"nav-pane-1\"]");
                 await page.ClickAsync("[data-first=\"nav-pane-1\"]");
 
-                const int maxScrollAttempts = 200;
+                const int maxScrollAttempts = 3;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;
@@ -161,12 +161,6 @@ namespace PrisApi.Services.Scrapers
                 {
                     Console.WriteLine("No products found via API monitoring.");
                 }
-
-                // if (apiResponses.Count > 0)
-                // {
-                //     File.WriteAllText("api_responses_debug.json", string.Join("\n---\n", apiResponses));
-                //     Console.WriteLine("API responses saved to api_ica_responses_debug.json for debugging");
-                // }
 
                 return products;
             }

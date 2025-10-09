@@ -13,7 +13,7 @@ namespace PrisApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class WillysScraperController : ControllerBase
+    public class WillysScraperController : ControllerBase   // Only run between 04:00-08:45
     {
         private readonly ScraperService _scrapingService;
         private readonly ILogger<WillysScraperController> _logger;

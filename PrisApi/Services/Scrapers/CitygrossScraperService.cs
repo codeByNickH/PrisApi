@@ -134,7 +134,7 @@ namespace PrisApi.Services.Scrapers
 
                 int nextPage = 3;
                 int currentPage = 2;
-                const int maxLoadMoreAttempts = 100;
+                const int maxLoadMoreAttempts = 3;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {
@@ -171,12 +171,6 @@ namespace PrisApi.Services.Scrapers
                         break;
                     }
                 }
-
-                // if (apiResponses.Count > 0)
-                // {
-                //     File.WriteAllText("api_citygross_responses_debug.json", string.Join("\n---\n", apiResponses));
-                //     Console.WriteLine("API responses saved to api_citygross_responses_debug.json for debugging");
-                // }
 
                 return products;
             }

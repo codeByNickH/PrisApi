@@ -305,7 +305,7 @@ namespace PrisApi.Services.Scrapers
                 // await page.WaitForSelectorAsync($"a[href=\"{category}\"]");
                 // await page.ClickAsync($"a[href=\"{category}\"]");
 
-                const int maxScrollAttempts = 200;
+                const int maxScrollAttempts = 3;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;
@@ -333,12 +333,6 @@ namespace PrisApi.Services.Scrapers
 
                     previousHeight = currentHeight;
                     Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Height: {currentHeight}");
-                }
-
-                if (apiResponses.Count > 0)
-                {
-                    File.WriteAllText("api_hemkop_responses_debug.json", string.Join("\n---\n", apiResponses));
-                    Console.WriteLine("API responses saved to api_hemkop_responses_debug.json for debugging");
                 }
 
                 return products;
