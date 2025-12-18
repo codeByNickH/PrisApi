@@ -134,7 +134,7 @@ namespace PrisApi.Services.Scrapers
 
                 int nextPage = 3;
                 int currentPage = 2;
-                const int maxLoadMoreAttempts = 3;
+                const int maxLoadMoreAttempts = 10;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {
@@ -162,7 +162,6 @@ namespace PrisApi.Services.Scrapers
                             Console.WriteLine($"Page {currentPage} button not found, pagination might be complete. Products found: {products.Count}");
                             nextPage -= 11;
                             currentPage -= 1;
-                            Console.WriteLine($"<||| {nextPage} |||>");
                         }
                     }
                     catch (Exception ex)

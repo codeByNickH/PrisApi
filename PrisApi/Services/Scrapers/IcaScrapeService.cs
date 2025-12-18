@@ -126,7 +126,7 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync("[data-first=\"nav-pane-1\"]");
                 await page.ClickAsync("[data-first=\"nav-pane-1\"]");
 
-                const int maxScrollAttempts = 3;
+                const int maxScrollAttempts = 2;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;

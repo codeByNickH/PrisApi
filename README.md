@@ -7,7 +7,9 @@ A comprehensive ASP.NET Core Web API demonstrating web scraping, browser automat
 
 ## 🎯 What It Does
 
-Automates collection of product pricing data from five Swedish grocery retailers (ICA, Willys, Coop, City Gross, Hemköp), handling complex pricing scenarios like multi-buy discounts, member prices, and unit conversions.
+Automates collection of product pricing data from four Swedish grocery retailers (ICA, Willys, Coop, City Gross), handling complex pricing scenarios like multi-buy discounts, member prices, and unit conversions.
+
+Send some selected products to discord if the price changes. 
 
 ## 🛠️ Technical Stack
 
@@ -17,6 +19,10 @@ Automates collection of product pricing data from five Swedish grocery retailers
 - **Data Processing**: JSON parsing, regex, unit normalization (g→kg, ml→l)
 
 ## 🏗️ Key Technical Features
+
+**Real-time Notification Engine**
+- Aggregates all price changes into a single summary payload to avoid API rate limits and notification spam.
+- Visualizes price movement (📉 DOWN / 📈 UP / 🆕 NEW) using a custom DTO logic.
 
 **Dynamic Configuration System**
 - Database-stored scraper configurations (no hardcoded selectors)
@@ -43,7 +49,7 @@ Automates collection of product pricing data from five Swedish grocery retailers
 ## 📊 Technical Specs
 
 - 90 products per category (limited scope testing)
-- 18 product categories × 5 stores
+- 18 product categories × 4 stores
 - 25+ store locations across Sweden
 - 10-second request delays (respectful automation)
 
@@ -54,7 +60,7 @@ Automates collection of product pricing data from five Swedish grocery retailers
 **The Learning Moment**: Later discovered I should have checked robots.txt and Terms of Service *first*. This taught me a crucial lesson about responsible automation.
 
 **Improvements Made**:
-- ✅ Increased delays from 50ms → 10 seconds (200x improvement)
+- ✅ Increased delays from 50ms → 10 seconds
 - ✅ Limited scope from comprehensive scraping → 90 products/category
 - ✅ Researched robots.txt compliance for all target sites
 - ✅ Repositioned as educational project only
@@ -65,9 +71,11 @@ Automates collection of product pricing data from five Swedish grocery retailers
 
 - **Backend Development**: RESTful API design, async/await patterns
 - **Database Design**: Complex relationships, EF Core migrations
-- **Web Scraping**: Browser automation, API interception, dynamic content handling
+- **Software Architecture**: SOLID principles, separation of concerns. Implemented the Options Pattern to strongly type configuration settings and decouple services from the configuration system.
+- **Security**: Secure management of sensitive credentials using .NET User Secrets and environment variables.
+- **System Integration**: Asynchronous communication with external APIs (Discord Webhooks) using batched payloads.
 - **Data Processing**: String parsing, unit conversion, duplicate detection
-- **Software Architecture**: SOLID principles, separation of concerns
+- **Web Scraping**: Browser automation, API interception, dynamic content handling
 - **Problem-Solving**: Adapting approach based on real-world constraints
 - **Professional Judgment**: Understanding when and how to build responsibly
 
@@ -88,7 +96,7 @@ Automates collection of product pricing data from five Swedish grocery retailers
 
 **Technical Skills**: Built a complex, multi-layered system demonstrating proficiency across the .NET ecosystem.
 
-**Learning & Growth**: Recognized compliance issues independently and made significant improvements without being told.
+**Learning & Growth**: Recognized compliance issues independently and made significant improvements.
 
 **Professional Maturity**: Understand the difference between technical capability and ethical responsibility.
 

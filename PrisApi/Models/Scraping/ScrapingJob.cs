@@ -11,7 +11,7 @@ public class ScrapingJob
     public string StoreLocation { get; set; } // city/district
     public DateTime StartedAt { get; set; }
     public DateTime? CompletedAt { get; set; }
-    public bool Success { get; set; }
+    public bool Success { get; set; } = false;
     [MaxLength(255)]
     public string ErrorMessage { get; set; }
     [Range(1, 100000)]

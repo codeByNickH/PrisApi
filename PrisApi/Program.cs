@@ -10,6 +10,7 @@ using PrisApi.Repository;
 using PrisApi.Models;
 using PrisApi.Mapper.IMapper;
 using PrisApi.Mapper;
+using PrisApi.Services.IService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -38,6 +39,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found")
 ));
+builder.Services.Configure<DiscordSettings>(builder.Configuration.GetSection("Discord"));
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<WillysScrapeService>();
@@ -51,6 +53,7 @@ builder.Services.AddScoped<IScrapeConfigHelper, ScrapeConfigHelper>();
 builder.Services.AddScoped<IRepository<StoreLocation>, LocationRepository>();
 builder.Services.AddScoped<IRepository<Store>, StoreRepository>();
 builder.Services.AddScoped<IMapping<Product>, ProductMapping>();
+builder.Services.AddScoped<IDiscordService, DiscordService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -64,7 +67,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.MapControllers();
 

@@ -1,3 +1,4 @@
+using Microsoft.IdentityModel.Tokens;
 using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
 using System.Net;
@@ -28,7 +29,7 @@ namespace PrisApi.Helper
             APIResponse response = new();
             var test = jobList.Where(e => !string.IsNullOrEmpty(e.ErrorMessage)).ToList();
             
-            if (test.Count() > 0)
+            if (test.Count > 0 || jobList.IsNullOrEmpty())
             {
                 var errorList = new List<string>();
                 foreach (var error in test)
