@@ -125,8 +125,8 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]"); // SearchStore
                 await page.FillAsync($"input[{_config.ScraperSelector.SearchStoreSelector}]", storeConfig.StoreLocation.PostalCode.ToString());
 
-                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]"); // SelectStore
-                await page.ClickAsync($"[{_config.ScraperSelector.SelectStoreSelector}]");
+                await page.WaitForSelectorAsync($"{_config.ScraperSelector.SelectStoreSelector}"); // SelectStore 
+                await page.ClickAsync($"{_config.ScraperSelector.SelectStoreSelector}");
 
                 await Task.Delay(500); // Picking store needs await to go through does not work otherwise.
 
@@ -192,7 +192,7 @@ namespace PrisApi.Services.Scrapers
 
             var options = new BrowserTypeLaunchOptions
             {
-                Headless = false,
+                Headless = true,
                 SlowMo = _config.RequestDelayMs
             };
 

@@ -5,6 +5,9 @@ using PrisApi.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using PrisApi.Mapper.IMapper;
+using System.Text.RegularExpressions;
+using PrisApi.Services;
+using PrisApi.Services.IService;
 
 namespace PrisApi.Repository
 {
@@ -12,10 +15,12 @@ namespace PrisApi.Repository
     {
         private readonly AppDbContext _dbContext;
         private readonly IMapping<Product> _mapping;
-        public ProductRepository(AppDbContext dbContext, IMapping<Product> mapping)
+        private readonly IDiscordService _discordService;
+        public ProductRepository(AppDbContext dbContext, IMapping<Product> mapping, IDiscordService discordService)
         {
             _dbContext = dbContext;
             _mapping = mapping;
+            _discordService = discordService;
         }
         public Task<Product> GetOnFilterAsync(Expression<Func<Product, bool>> filter = null, bool tracked = true)
         {
@@ -29,33 +34,89 @@ namespace PrisApi.Repository
 
         public async Task<List<int>> SaveAsync(List<Product> scrapedProducts, int categoryId)
         {
-            // var mappedProducts = await _mapping.ToProduct(scrapedProducts); Change so mapping happens here instead?
             // 
 
             var existingProducts = await _dbContext.Products
                 .Where(p => p.StoreId == scrapedProducts.First().StoreId)
-                .Select(p => new { p.Id, p.Name, p.ProdCode, p.CreatedAt })
+                .Select(p => new 
+                { 
+                    p.Id,
+                    p.Name,
+                    p.ProdCode,
+                    p.CreatedAt,
+                    p.CurrentPrice,
+                    p.CurrentComparePrice,
+                })
                 .ToListAsync();
 
+            var store = await _dbContext.Stores
+                .Where(s => s.Id == scrapedProducts.First().StoreId)
+                .Select(s => new { s.Name }).FirstOrDefaultAsync();
+
+            var storeName = store?.Name ?? "Unknown Store";
+
             var productDict = existingProducts
-                .ToDictionary(p => $"{p.Name}_{p.ProdCode}", p => p.Id);
+                .ToDictionary(p => $"{p.Name}_{p.ProdCode}", p => p);
 
             var toAdd = new List<Product>();
             var toUpdate = new List<Product>();
+            var priceChangeForDiscord = new List<ProductPriceChange>(); // Kenneth - the discount hero
+            var targetProducts = new List<string>()
+            {
+                $@"\bnötfärs\b",
+                $@"\blövbiff\b",
+                $@"\bkycklingfilé\b",
+                $@"\bkycklingfärs\b",
+                $@"\bsmör\b",
+                $@"\bcocoa dark\b",
+            };
 
             foreach (var scrapedProduct in scrapedProducts)
             {
                 var key = $"{scrapedProduct.Name}_{scrapedProduct.ProdCode}";
 
-                if (productDict.ContainsKey(key))
+                if (productDict.TryGetValue(key, out var existingProduct))
                 {
-                    scrapedProduct.Id = productDict[key];
+                    if (scrapedProduct.CurrentPrice != existingProduct.CurrentPrice &&
+                        targetProducts.Any(keyword =>
+                            Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
+                    {
+                        priceChangeForDiscord.Add(new ProductPriceChange
+                        {
+                            StoreName = storeName,
+                            ProductName = scrapedProduct.Name,
+                            Size = scrapedProduct?.Size,
+                            Unit = scrapedProduct?.Unit,
+                            NewPrice = scrapedProduct.CurrentPrice,
+                            NewComparePrice = scrapedProduct.CurrentComparePrice,
+                            OldPrice = existingProduct.CurrentPrice,
+                            OldComparePrice = existingProduct.CurrentComparePrice,
+
+                        });
+                    }
+
+                    scrapedProduct.Id = existingProduct.Id;
                     scrapedProduct.UpdatedAt = DateTime.Now;
-                    scrapedProduct.CreatedAt = existingProducts.Where(i => i.Id == productDict[key]).Select(t => t.CreatedAt).FirstOrDefault();
+                    scrapedProduct.CreatedAt = existingProduct.CreatedAt;
                     toUpdate.Add(scrapedProduct);
                 }
                 else
                 {
+                    if (targetProducts.Any(keyword => Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
+                    {
+                        priceChangeForDiscord.Add(new ProductPriceChange
+                        {
+                            StoreName = storeName,
+                            ProductName = scrapedProduct.Name,
+                            Size = scrapedProduct?.Size,
+                            Unit = scrapedProduct?.Unit,
+                            NewPrice = scrapedProduct.CurrentPrice,
+                            NewComparePrice = scrapedProduct.CurrentComparePrice,
+                            OldPrice = null,
+                            OldComparePrice = null,
+
+                        });
+                    }
                     scrapedProduct.CreatedAt = DateTime.Now;
                     toAdd.Add(scrapedProduct);
                 }
@@ -112,7 +173,7 @@ namespace PrisApi.Repository
             {
                 await _dbContext.CategoryLists.AddRangeAsync(categories);
             }
-            
+
             await _dbContext.PriceHistories.AddRangeAsync(priceHistories);
             await _dbContext.SaveChangesAsync();
 
@@ -122,6 +183,7 @@ namespace PrisApi.Repository
                 toAdd.Count,
                 toUpdate.Count
             };
+            await _discordService.SendToDiscordAsync(priceChangeForDiscord);
             return await Task.FromResult(job);
         }
         public Task<Product> SaveAsync(Product product)
