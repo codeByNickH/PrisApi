@@ -5,11 +5,10 @@ namespace PrisApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class HemkopScraperController : ControllerBase
+    public class HemkopScraperController : ControllerBase  // Not implemented, does not have store separation on online data.
     {
         private readonly ScraperService _scrapingService;
         private readonly ILogger<HemkopScraperController> _logger;
-        // 822 31, "Alfta"
         public HemkopScraperController(ScraperService scrapingService, ILogger<HemkopScraperController> logger)
         {
             _scrapingService = scrapingService;

@@ -7,7 +7,7 @@ using PrisApi.Models.Scraping;
 
 namespace PrisApi.Services.Scrapers
 {
-    public class HemkopScraperService
+    public class HemkopScraperService // Not implemented, does not have store separation on online data.
     {
         private readonly ScraperConfig _config;
         private readonly IScrapeHelper _scrapeHelper;

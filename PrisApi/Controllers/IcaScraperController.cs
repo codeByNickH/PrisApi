@@ -7,6 +7,7 @@ using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository.IRepository;
 using PrisApi.Services;
+using PrisApi.Services.IService;
 
 namespace PrisApi.Controllers
 {
@@ -19,13 +20,15 @@ namespace PrisApi.Controllers
         private readonly IRepository<Store> _repository;
         private readonly IScrapeConfigHelper _configHelper;
         private readonly AppDbContext _dbContext;
-        public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> repository, AppDbContext dbContext)
+        private readonly IDiscordService _discordService;
+        public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> repository, AppDbContext dbContext, IDiscordService discordService)
         {
             _scraperService = scraperService;
             _logger = logger;
             _configHelper = configHelper;
             _repository = repository;
             _dbContext = dbContext;
+            _discordService = discordService;
         }
         [HttpPost("IcaMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaMeat()
@@ -46,8 +49,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDairy()
@@ -68,7 +75,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFruit()
@@ -89,7 +101,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPantry()
@@ -110,7 +127,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFrozen()
@@ -131,7 +153,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaBread")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaBread()
@@ -152,7 +179,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaFish")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFish()
@@ -173,7 +205,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaVege")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaVege()
@@ -194,7 +231,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaSnacks()
@@ -215,7 +257,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDrinks()
@@ -236,7 +283,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaPrePackagedMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPrePackagedMeal()
@@ -257,7 +309,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaKids")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaKids()
@@ -278,7 +335,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaCleaning()
@@ -299,7 +361,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaHealth()
@@ -320,7 +387,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaAnimal()
@@ -341,7 +413,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("IcaTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaTobak()
@@ -362,7 +439,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
 
         // [HttpPost("IcaOffers")] // Add location on this

@@ -5,9 +5,9 @@ using PrisApi.Helper.IHelper;
 using PrisApi.Models;
 using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
-using PrisApi.Repository;
 using PrisApi.Repository.IRepository;
 using PrisApi.Services;
+using PrisApi.Services.IService;
 
 namespace PrisApi.Controllers
 {
@@ -20,20 +20,21 @@ namespace PrisApi.Controllers
         private readonly IRepository<Store> _locationRepository;
         private readonly IScrapeConfigHelper _configHelper;
         private readonly AppDbContext _dbContext;
-        public WillysScraperController(ScraperService scrapingService, ILogger<WillysScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext)
+        private readonly IDiscordService _discordService;
+        public WillysScraperController(ScraperService scrapingService, ILogger<WillysScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext, IDiscordService discordService)
         {
             _scrapingService = scrapingService;
             _logger = logger;
             _configHelper = configHelper;
             _locationRepository = locationRepository;
             _dbContext = dbContext;
+            _discordService = discordService;
         }
         [HttpPost("WillysMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysMeat()
         {
             _logger.LogInformation("Scrape of Willys meat initiated");
             var config = await _configHelper.GetConfig(2);
-            // Get all willys stores and loop through all locations?
             var location = await _locationRepository.GetListOnFilterAsync(l => l.Name == config.StoreName);
 
             var jobList = new List<ScrapingJob>();
@@ -48,7 +49,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysDairy()
@@ -69,7 +75,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysFruit()
@@ -90,7 +101,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysPantry()
@@ -111,7 +127,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysFrozen()
@@ -132,7 +153,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysBread")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysBread()
@@ -153,7 +179,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysFish")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysFish()
@@ -174,7 +205,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysVege")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysVege()
@@ -195,7 +231,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysSnacks()
@@ -216,7 +257,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysDrinks()
@@ -237,7 +283,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysPrePackageMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysPrePackageMeal()
@@ -258,7 +309,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysKids")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysKids()
@@ -279,7 +335,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysCleaning()
@@ -300,7 +361,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysHealth()
@@ -321,7 +387,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysPharmacy")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysPharmacy()
@@ -342,7 +413,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysAnimal()
@@ -363,7 +439,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("WillysTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeWillysTobak()
@@ -384,7 +465,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
 
         // [HttpPost("WillysLoop")]

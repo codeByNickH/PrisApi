@@ -14,12 +14,10 @@ namespace PrisApi.Repository
     public class ProductRepository : IRepository<Product>, IProductRepository
     {
         private readonly AppDbContext _dbContext;
-        private readonly IMapping<Product> _mapping;
         private readonly IDiscordService _discordService;
-        public ProductRepository(AppDbContext dbContext, IMapping<Product> mapping, IDiscordService discordService)
+        public ProductRepository(AppDbContext dbContext, IDiscordService discordService)
         {
             _dbContext = dbContext;
-            _mapping = mapping;
             _discordService = discordService;
         }
         public Task<Product> GetOnFilterAsync(Expression<Func<Product, bool>> filter = null, bool tracked = true)
@@ -34,8 +32,6 @@ namespace PrisApi.Repository
 
         public async Task<List<int>> SaveAsync(List<Product> scrapedProducts, int categoryId)
         {
-            // 
-
             var existingProducts = await _dbContext.Products
                 .Where(p => p.StoreId == scrapedProducts.First().StoreId)
                 .Select(p => new 
@@ -51,7 +47,7 @@ namespace PrisApi.Repository
 
             var store = await _dbContext.Stores
                 .Where(s => s.Id == scrapedProducts.First().StoreId)
-                .Select(s => new { s.Name }).FirstOrDefaultAsync();
+                .Select(s => new { s.Name, s.StoreLocation.City }).FirstOrDefaultAsync();
 
             var storeName = store?.Name ?? "Unknown Store";
 
@@ -60,7 +56,7 @@ namespace PrisApi.Repository
 
             var toAdd = new List<Product>();
             var toUpdate = new List<Product>();
-            var priceChangeForDiscord = new List<ProductPriceChange>(); // Kenneth - the discount hero
+            var priceChangeForDiscord = new List<ProductPriceChange>();
             var targetProducts = new List<string>()
             {
                 $@"\bnötfärs\b",
@@ -102,6 +98,7 @@ namespace PrisApi.Repository
                 }
                 else
                 {
+                    // Product matches keyword but does not exist in Db
                     if (targetProducts.Any(keyword => Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
                     {
                         priceChangeForDiscord.Add(new ProductPriceChange

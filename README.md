@@ -23,6 +23,7 @@ Send some selected products to discord if the price changes.
 **Real-time Notification Engine**
 - Aggregates all price changes into a single summary payload to avoid API rate limits and notification spam.
 - Visualizes price movement (📉 DOWN / 📈 UP / 🆕 NEW) using a custom DTO logic.
+- Sends error message if there is a problem with the data collection.
 
 **Dynamic Configuration System**
 - Database-stored scraper configurations (no hardcoded selectors)
