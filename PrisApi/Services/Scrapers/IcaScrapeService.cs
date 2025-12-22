@@ -32,7 +32,7 @@ namespace PrisApi.Services.Scrapers
 
             var options = new BrowserTypeLaunchOptions
             {
-                Headless = true,
+                Headless = false,
                 SlowMo = _config.RequestDelayMs
             };
 
@@ -117,8 +117,8 @@ namespace PrisApi.Services.Scrapers
 
                 await Task.Delay(500);
 
-                await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CategoryNavSelector}]"); // OpenCategoryNav
-                await page.ClickAsync($"[{_config.ScraperSelector.CategoryNavSelector}]");
+                await page.WaitForSelectorAsync($"{_config.ScraperSelector.CategoryNavSelector}"); // OpenCategoryNav
+                await page.ClickAsync($"{_config.ScraperSelector.CategoryNavSelector}");
 
                 await page.WaitForSelectorAsync($"[data-test=\"{navigation}\"]");
                 await page.ClickAsync($"[data-test=\"{navigation}\"]");

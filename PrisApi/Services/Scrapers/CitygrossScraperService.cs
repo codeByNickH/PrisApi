@@ -134,7 +134,7 @@ namespace PrisApi.Services.Scrapers
 
                 int nextPage = 3;
                 int currentPage = 2;
-                const int maxLoadMoreAttempts = 10;
+                const int maxLoadMoreAttempts = 3;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {

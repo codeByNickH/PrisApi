@@ -7,6 +7,7 @@ using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository.IRepository;
 using PrisApi.Services;
+using PrisApi.Services.IService;
 
 namespace PrisApi.Controllers
 {
@@ -19,13 +20,15 @@ namespace PrisApi.Controllers
         private readonly IScrapeConfigHelper _configHelper;
         private readonly IRepository<Store> _locationRepository;
         private readonly AppDbContext _dbContext;
-        public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext)
+        private readonly IDiscordService _discordService;
+        public CitygrossScraperController(ScraperService scraperService, ILogger<CitygrossScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext, IDiscordService discordService)
         {
             _scrapingService = scraperService;
             _logger = logger;
             _configHelper = configHelper;
             _locationRepository = locationRepository;
             _dbContext = dbContext;
+            _discordService = discordService;
         }
         [HttpPost("CityGrossMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossMeat()
@@ -43,7 +46,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossDeli")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDeli()
@@ -61,7 +69,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDairy()
@@ -79,7 +92,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFruit()
@@ -97,7 +115,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPantry()
@@ -115,7 +138,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFrozen()
@@ -133,7 +161,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossBread")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossBread()
@@ -151,7 +184,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossFish")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossFish()
@@ -169,7 +207,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossVege")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossVege()
@@ -187,7 +230,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossSnacks()
@@ -205,7 +253,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossCandy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossCandy()
@@ -223,7 +276,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossDrinks()
@@ -241,7 +299,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossPrePackageMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPrePackageMeal()
@@ -259,7 +322,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossKids")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossKids()
@@ -277,7 +345,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossCleaning()
@@ -295,7 +368,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossHygiene")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossHygiene()
@@ -313,7 +391,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossHealt()
@@ -331,7 +414,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossPharmacy")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossPharmacy()
@@ -349,7 +437,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossAnimal()
@@ -367,7 +460,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CityGrossTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeCityGrossTobak()
@@ -385,7 +483,12 @@ namespace PrisApi.Controllers
                 await _dbContext.ScrapingJobs.AddAsync(job);
                 await _dbContext.SaveChangesAsync();
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         // [HttpPost("CityGrossKitchen")]
         // public async Task<IActionResult> ScrapeCityGrossKitchen()

@@ -7,6 +7,7 @@ using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
 using PrisApi.Repository.IRepository;
 using PrisApi.Services;
+using PrisApi.Services.IService;
 
 namespace PrisApi.Controllers
 {
@@ -19,32 +20,16 @@ namespace PrisApi.Controllers
         private readonly IScrapeConfigHelper _configHelper;
         private readonly IRepository<Store> _locationRepository;
         private readonly AppDbContext _dbContext;
-        public CoopScraperController(ScraperService scraperService, ILogger<CoopScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext)
+        private readonly IDiscordService _discordService;
+        public CoopScraperController(ScraperService scraperService, ILogger<CoopScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> locationRepository, AppDbContext dbContext, IDiscordService discordService)
         {
             _scraperService = scraperService;
             _logger = logger;
             _configHelper = configHelper;
             _locationRepository = locationRepository;
             _dbContext = dbContext;
+            _discordService = discordService;
         }
-        // [HttpPost("CoopSpices")]
-        // public async Task<ActionResult<APIResponse>> ScrapeCoopSpices() kryddor-smaksattare | Add on Pantry category?
-        // {
-        //     _logger.LogInformation("Scrape of Coop spices initiated");
-        //   var config = await _configHelper.GetConfig(3);
-        //   var location = await _locationRepository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
-
-        //   var jobList = new List<ScrapingJob>();
-        //   foreach (var loc in location)
-        //   {
-        //      var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavSpices, loc.zip, 4);
-        //      job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-        //      jobList.Add(job);
-        //      await _dbContext.ScrapingJobs.AddAsync(job);
-        //      await _dbContext.SaveChangesAsync();
-        //   }
-        //   return ResponseHelper.CreateApiResponse(jobList);
-        // }
         [HttpPost("CoopMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopMeat()
         {
@@ -64,7 +49,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopDairy()
@@ -85,7 +75,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopCheese")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopCheese()
@@ -106,7 +101,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFruit()
@@ -127,7 +127,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopPantry()
@@ -148,8 +153,33 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
+        
+        // [HttpPost("CoopSpices")]
+        // public async Task<ActionResult<APIResponse>> ScrapeCoopSpices() kryddor-smaksattare | Add on Pantry category?
+        // {
+        //     _logger.LogInformation("Scrape of Coop spices initiated");
+        //   var config = await _configHelper.GetConfig(3);
+        //   var location = await _locationRepository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+
+        //   var jobList = new List<ScrapingJob>();
+        //   foreach (var loc in location)
+        //   {
+        //      var job = await _scraperService.ScrapeCoopAsync(config.ScraperNavigation.NavSpices, loc.zip, 4);
+        //      job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+        //      jobList.Add(job);
+        //      await _dbContext.ScrapingJobs.AddAsync(job);
+        //      await _dbContext.SaveChangesAsync();
+        //   }
+        //   return ResponseHelper.CreateApiResponse(jobList);
+        // }
+
         [HttpPost("CoopFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFrozen()
         {
@@ -169,7 +199,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopBread")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopBread()
@@ -190,7 +225,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopFish")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopFish()
@@ -211,7 +251,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopVege")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopVege()
@@ -232,7 +277,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopSnacks()
@@ -253,7 +303,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopDrinks()
@@ -274,7 +329,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopPrePackageMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopPrePackageMeal()
@@ -295,7 +355,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopKids")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopKids()
@@ -316,7 +381,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopCleaning()
@@ -337,7 +407,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopPharmacy")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopPharmacy()
@@ -358,7 +433,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopHygien")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopHygien()
@@ -379,7 +459,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopAnimal()
@@ -400,7 +485,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
         [HttpPost("CoopTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeCoopTobak()
@@ -421,7 +511,12 @@ namespace PrisApi.Controllers
                     await _dbContext.SaveChangesAsync();
                 }
             }
-            return ResponseHelper.CreateApiResponse(jobList);
+            var response = ResponseHelper.CreateApiResponse(jobList);
+            if (!response.IsSuccess)
+            {
+                await _discordService.SendErrorToDiscordAsync(jobList);
+            }
+            return response;
         }
     }
 }
