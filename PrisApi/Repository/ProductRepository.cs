@@ -61,8 +61,15 @@ namespace PrisApi.Repository
             {
                 $@"\bnötfärs\b",
                 $@"\blövbiff\b",
+                $@"\bryggbiff\b",
+                $@"\bfläskytterfilé\b",
+                $@"\bsalsiccia\b",
+                $@"\brostbiff\b",
                 $@"\bkycklingfilé\b",
+                $@"\bkycklingbröstfilé\b",
+                $@"\bkycklingbröstfiléer\b",
                 $@"\bkycklingfärs\b",
+                $@"\bkassler\b",
                 $@"\bsmör\b",
                 $@"\bcocoa dark\b",
             };
@@ -96,9 +103,8 @@ namespace PrisApi.Repository
                     scrapedProduct.CreatedAt = existingProduct.CreatedAt;
                     toUpdate.Add(scrapedProduct);
                 }
-                else
+                else    // Product matches keyword but does not exist in Db
                 {
-                    // Product matches keyword but does not exist in Db
                     if (targetProducts.Any(keyword => Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
                     {
                         priceChangeForDiscord.Add(new ProductPriceChange

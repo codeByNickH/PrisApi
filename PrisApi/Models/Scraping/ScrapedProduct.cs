@@ -1,6 +1,6 @@
 namespace PrisApi.Models.Scraping
 {
-    public class ScrapedProduct
+    public record ScrapedProduct
     {
         public string ProdCode { get; set; }
         public string RawName { get; set; }
