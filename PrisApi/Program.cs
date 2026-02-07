@@ -39,7 +39,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection") ??
     throw new InvalidOperationException("Connection string 'DefaultConnection' not found")
 ));
-builder.Services.Configure<DiscordSettings>(builder.Configuration.GetSection("Discord"));
+builder.Services.Configure<BnasDiscordSettings>(builder.Configuration.GetSection("BnasDiscord"));
+builder.Services.Configure<GvlDiscordSettings>(builder.Configuration.GetSection("GvlDiscord"));
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<WillysScrapeService>();

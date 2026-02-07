@@ -40,7 +40,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavMeat, loc, 1);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -66,7 +66,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavDairy, loc, 2);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -92,7 +92,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -118,7 +118,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavPantry, loc, 4);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -144,7 +144,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavFrozen, loc, 5);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -170,7 +170,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -196,7 +196,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -222,7 +222,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -248,7 +248,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -274,7 +274,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavBeverage, loc, 10);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -300,7 +300,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -326,7 +326,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavKids, loc, 12);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -352,7 +352,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -378,7 +378,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavHealth, loc, 14);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -404,7 +404,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavPharmacy, loc, 15);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -430,7 +430,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavAnimals, loc, 16);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
@@ -456,7 +456,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs")
+                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavTobacco, loc, 17);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";

@@ -469,7 +469,7 @@ namespace PrisApi.Helper
                         var j = ParseDecimal(parts[0]);
                         var i = ParseDecimal(parts[2]);
                         product.RawDiscountPrice = Math.Round(i / j, 2);
-                        product.MinQuantity = $"{j} för";
+                        product.MinQuantity = $"{j} för {i}";
                         product.RawDiscount = product.RawOrdPrice - product.RawDiscountPrice;
                         product.TotalPrice = i;
                         product.DiscountJmfPrice = Math.Round(product.RawDiscountPrice / product.Size, 2);
@@ -494,7 +494,7 @@ namespace PrisApi.Helper
                         var j = ParseDecimal(parts[0]);
                         var i = ParseDecimal(parts[2]);
                         product.RawDiscountPrice = Math.Round(i / j, 2);
-                        product.MinQuantity = $"{j} för";
+                        product.MinQuantity = $"{j} för {i}";
                         product.RawDiscount = product.RawOrdPrice - product.RawDiscountPrice;
                         product.TotalPrice = i;
                         product.DiscountJmfPrice = Math.Round(product.RawDiscountPrice / product.Size, 2);
@@ -677,7 +677,7 @@ namespace PrisApi.Helper
                     decimal.TryParse(GetStringProperty(firstPromo, "rewardLabel"), culture, out decimal tp);
                     decimal totalPrice = tp;
                     product.RawDiscount = savings;
-                    product.MinQuantity = conditionLabel;
+                    product.MinQuantity = $"{conditionLabel} {totalPrice}";
                     product.TotalPrice = totalPrice;
                     string[] minQint = conditionLabel.Split(" ", 2);
                     // product.RawDiscountPrice = Math.Round(product.TotalPrice / int.Parse(minQint[0]), 2);
@@ -817,8 +817,8 @@ namespace PrisApi.Helper
                         }
                         else if (!string.IsNullOrEmpty(minQuantity) && minQint > 1)
                         {
-                            product.MinQuantity = $"{minQuantity} för";
                             product.TotalPrice = ParseDecimal(GetStringProperty(firstPromo, "value"));
+                            product.MinQuantity = $"{minQuantity} för {product.TotalPrice}";
                             product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
                         }
 
@@ -1015,9 +1015,9 @@ namespace PrisApi.Helper
                 {
                     int.TryParse(requiredAmount, out int i);
                     product.RawDiscountPrice = Math.Round(product.RawDiscountPrice / i, 2);
-                    product.MinQuantity = $"{i} för";
                     product.RawDiscount = Math.Round(product.RawOrdPrice - product.RawDiscountPrice, 2);
                     product.TotalPrice = Math.Round(ParseDecimal(GetStringProperty(firstPromo, "price")), 2);
+                    product.MinQuantity = $"{i} för {product.TotalPrice}";
                 }
 
                 if (firstPromo.TryGetProperty("maxNumberOfUseWithUnit", out var redeemLimit) &&
@@ -1092,8 +1092,8 @@ namespace PrisApi.Helper
                 if (conditionLabel.Contains("för"))
                 {
                     product.RawDiscount = savings;
-                    product.MinQuantity = conditionLabel;
                     product.TotalPrice = totalPrice;
+                    product.MinQuantity = $"{conditionLabel} {totalPrice}";
                 }
                 else
                 {

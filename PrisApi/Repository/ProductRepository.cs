@@ -34,8 +34,8 @@ namespace PrisApi.Repository
         {
             var existingProducts = await _dbContext.Products
                 .Where(p => p.StoreId == scrapedProducts.First().StoreId)
-                .Select(p => new 
-                { 
+                .Select(p => new
+                {
                     p.Id,
                     p.Name,
                     p.ProdCode,
@@ -47,9 +47,15 @@ namespace PrisApi.Repository
 
             var store = await _dbContext.Stores
                 .Where(s => s.Id == scrapedProducts.First().StoreId)
-                .Select(s => new { s.Name, s.StoreLocation.City }).FirstOrDefaultAsync();
+                .Select(s => new { s.Name, s.StoreLocationId }).FirstOrDefaultAsync();
+            
+            var location = await _dbContext.StoreLocations
+                .Where(l => l.Id == store.StoreLocationId)
+                .Select(l => new { l.City, l.Address, l.District }).FirstOrDefaultAsync();
 
             var storeName = store?.Name ?? "Unknown Store";
+            var city = location?.City ?? "Unknown City";
+            var address = location?.Address ?? "Unknown Address";
 
             var productDict = existingProducts
                 .ToDictionary(p => $"{p.Name}_{p.ProdCode}", p => p);
@@ -80,13 +86,17 @@ namespace PrisApi.Repository
 
                 if (productDict.TryGetValue(key, out var existingProduct))
                 {
-                    if (scrapedProduct.CurrentPrice != existingProduct.CurrentPrice &&
+                    if (city == "Bollnäs" && scrapedProduct.CurrentPrice != existingProduct.CurrentPrice &&
                         targetProducts.Any(keyword =>
                             Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
                     {
                         priceChangeForDiscord.Add(new ProductPriceChange
                         {
                             StoreName = storeName,
+                            City = city,
+                            Address = address,
+                            Brand = scrapedProduct?.Brand,
+                            CountryOfOrigin = scrapedProduct?.CountryOfOrigin,
                             ProductName = scrapedProduct.Name,
                             Size = scrapedProduct?.Size,
                             Unit = scrapedProduct?.Unit,
@@ -94,9 +104,35 @@ namespace PrisApi.Repository
                             NewComparePrice = scrapedProduct.CurrentComparePrice,
                             OldPrice = existingProduct.CurrentPrice,
                             OldComparePrice = existingProduct.CurrentComparePrice,
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
 
                         });
                     }
+                    else if (city != "Bollnäs")
+                    {
+                        if (scrapedProduct.CurrentPrice != existingProduct.CurrentPrice)
+                        {
+                            var a = scrapedProduct.MinQuantity;
+                            priceChangeForDiscord.Add(new ProductPriceChange
+                            {
+                                StoreName = storeName,
+                                City = $"{city} {location?.District}",
+                                Address = address,
+                                Brand = scrapedProduct?.Brand,
+                                CountryOfOrigin = scrapedProduct?.CountryOfOrigin,
+                                ProductName = scrapedProduct.Name,
+                                Size = scrapedProduct?.Size,
+                                Unit = scrapedProduct?.Unit,
+                                NewPrice = scrapedProduct.CurrentPrice,
+                                NewComparePrice = scrapedProduct.CurrentComparePrice,
+                                OldPrice = existingProduct.CurrentPrice,
+                                OldComparePrice = existingProduct.CurrentComparePrice,
+                                MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+                                
+                            });
+                        }
+                    }
+
 
                     scrapedProduct.Id = existingProduct.Id;
                     scrapedProduct.UpdatedAt = DateTime.Now;
@@ -105,11 +141,15 @@ namespace PrisApi.Repository
                 }
                 else    // Product matches keyword but does not exist in Db
                 {
-                    if (targetProducts.Any(keyword => Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
+                    if (city == "Bollnäs" && targetProducts.Any(keyword => Regex.IsMatch(scrapedProduct.Name, keyword, RegexOptions.IgnoreCase)))
                     {
                         priceChangeForDiscord.Add(new ProductPriceChange
                         {
                             StoreName = storeName,
+                            City = city,
+                            Address = address,
+                            Brand = scrapedProduct?.Brand,
+                            CountryOfOrigin = scrapedProduct?.CountryOfOrigin,
                             ProductName = scrapedProduct.Name,
                             Size = scrapedProduct?.Size,
                             Unit = scrapedProduct?.Unit,
@@ -117,6 +157,27 @@ namespace PrisApi.Repository
                             NewComparePrice = scrapedProduct.CurrentComparePrice,
                             OldPrice = null,
                             OldComparePrice = null,
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+
+                        });
+                    }
+                    else if (city != "Bollnäs")
+                    {
+                        priceChangeForDiscord.Add(new ProductPriceChange
+                        {
+                            StoreName = storeName,
+                            City = $"{city} {location?.District}",
+                            Address = address,
+                            Brand = scrapedProduct?.Brand,
+                            CountryOfOrigin = scrapedProduct?.CountryOfOrigin,
+                            ProductName = scrapedProduct.Name,
+                            Size = scrapedProduct?.Size,
+                            Unit = scrapedProduct?.Unit,
+                            NewPrice = scrapedProduct.CurrentPrice,
+                            NewComparePrice = scrapedProduct.CurrentComparePrice,
+                            OldPrice = null,
+                            OldComparePrice = null,
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
 
                         });
                     }
@@ -125,6 +186,7 @@ namespace PrisApi.Repository
                 }
             }
 
+            
             if (toAdd.Any())
             {
                 await _dbContext.Products.AddRangeAsync(toAdd);

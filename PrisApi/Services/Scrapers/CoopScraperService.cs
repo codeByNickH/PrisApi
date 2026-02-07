@@ -158,11 +158,10 @@ namespace PrisApi.Services.Scrapers
 
                         if (buttonExists)
                         {
-                            await Task.Delay(9500);
+                            await Task.Delay(10000);
                             await page.ClickAsync(loadMoreButtonSelector, new PageClickOptions { Force = true });
                             Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
                             j++;
-                            await Task.Delay(500);
                         }
                         else
                         {
