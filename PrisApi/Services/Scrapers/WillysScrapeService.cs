@@ -130,8 +130,6 @@ namespace PrisApi.Services.Scrapers
 
                 await Task.Delay(500); // Picking store needs await to go through does not work otherwise.
 
-                // await page.WaitForLoadStateAsync(LoadState.NetworkIdle); // Why does this not work?
-
                 await page.WaitForSelectorAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]"); // CloseChooseTab
                 await page.ClickAsync($"[{_config.ScraperSelector.CloseChooseTabSelector}]");
 

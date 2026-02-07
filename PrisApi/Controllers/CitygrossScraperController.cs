@@ -40,11 +40,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavMeat, loc, 1);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavMeat, loc, 1);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -63,11 +66,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavChark, loc, 1);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavChark, loc, 1);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -86,11 +92,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavDairy, loc, 2);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavDairy, loc, 2);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -109,11 +118,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -132,11 +144,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPantry, loc, 4);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPantry, loc, 4);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -155,11 +170,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFrozen, loc, 5);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFrozen, loc, 5);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -178,11 +196,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -201,11 +222,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -224,11 +248,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -247,11 +274,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavSnacks, loc, 9);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavSnacks, loc, 9);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -270,11 +300,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -293,11 +326,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBeverage, loc, 10);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavBeverage, loc, 10);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -316,11 +352,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -339,11 +378,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavKids, loc, 12);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavKids, loc, 12);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -362,11 +404,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -385,11 +430,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHygien, loc, 14);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHygien, loc, 14);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -408,11 +456,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHealth, loc, 14);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavHealth, loc, 14);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -431,11 +482,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPharmacy, loc, 15);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavPharmacy, loc, 15);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -454,11 +508,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavAnimals, loc, 16);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavAnimals, loc, 16);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
@@ -477,11 +534,14 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavTobacco, loc, 17);
-                job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                jobList.Add(job);
-                await _dbContext.ScrapingJobs.AddAsync(job);
-                await _dbContext.SaveChangesAsync();
+                if(loc.StoreLocation.City == "Gävle")
+                {
+                    var job = await _scrapingService.ScrapeCityGrossAsync(config.ScraperNavigation.NavTobacco, loc, 17);
+                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
+                    jobList.Add(job);
+                    await _dbContext.ScrapingJobs.AddAsync(job);
+                    await _dbContext.SaveChangesAsync();
+                }
             }
             var response = ResponseHelper.CreateApiResponse(jobList);
             if (!response.IsSuccess)
