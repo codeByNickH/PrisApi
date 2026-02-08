@@ -3,7 +3,7 @@ using PrisApi.Helper;
 using PrisApi.Models.Scraping;
 using System.Threading.Tasks;
 using System.Linq;
-using PrisApi.Models;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace PrisApi.Tests
 {
@@ -12,7 +12,7 @@ namespace PrisApi.Tests
         [Fact]
         public async Task ExtractProductsFromJson_ShouldReturnProducts_WhenJsonIsValid()
         {
-            var helper = new ScrapeHelper();
+            var helper = new ScrapeHelper(NullLogger<ScrapeHelper>.Instance);
             string json = """
                 {
                     "entities": {
@@ -115,7 +115,7 @@ namespace PrisApi.Tests
                 ImageSrc = null,
                 MaxQuantity = "Inget max antal",
                 MemberDiscount = false,
-                MinQuantity = "2 för",
+                MinQuantity = "2 för 35",
                 OrdJmfPrice = 285.24m,
                 ProdCode = "2130056",
                 RawDiscount = 12.45m,

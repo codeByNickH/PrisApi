@@ -15,9 +15,10 @@ namespace PrisApi.Services.Scrapers
         private readonly bool _isCloud;
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
-        private string ProductListSelector = "[data-testid=\"product\"]";
-        public WillysScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
+        private readonly ILogger<WillysScrapeService> _logger;
+        public WillysScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, ILogger<WillysScrapeService> logger)
         {
+            _logger = logger;
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
 
@@ -68,7 +69,7 @@ namespace PrisApi.Services.Scrapers
                 {
                     if (response.Url.Contains("se/c/") || response.Url.Contains("products"))
                     {
-                        Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
+                        _logger.LogInformation($"API Response: {response.Url} - Status: {response.Status}");
 
                         if (response.Status == 200)
                         {
@@ -101,7 +102,7 @@ namespace PrisApi.Services.Scrapers
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error processing response: {ex.Message}");
+                    _logger.LogError($"Error processing response: {ex.Message}");
                 }
             };
 
@@ -139,7 +140,7 @@ namespace PrisApi.Services.Scrapers
                 await page.WaitForSelectorAsync($"a[href=\"{navigation}\"]");
                 await page.ClickAsync($"a[href=\"{navigation}\"]");
 
-                const int maxScrollAttempts = 3;
+                const int maxScrollAttempts = 4;
                 int previousHeight = 0;
                 int noChangeCount = 0;
                 const int maxNoChangeAttempts = 3;
@@ -153,7 +154,7 @@ namespace PrisApi.Services.Scrapers
                         noChangeCount++;
                         if (noChangeCount >= maxNoChangeAttempts)
                         {
-                            Console.WriteLine($"No height change for {maxNoChangeAttempts} attempts - assuming all content loaded");
+                            _logger.LogInformation($"No height change for {maxNoChangeAttempts} attempts - assuming all content loaded");
                             break;
                         }
                     }
@@ -166,204 +167,22 @@ namespace PrisApi.Services.Scrapers
                     await Task.Delay(10000);
 
                     previousHeight = currentHeight;
-                    Console.WriteLine($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products scraped: {products.Count}");
+                    _logger.LogInformation($"Scroll attempt {i + 1}/{maxScrollAttempts}, Products scraped: {products.Count}");
                 }
 
                 // if (apiResponses.Count > 0)
                 // {
                 //     File.WriteAllText("api_willys_responses_debug.json", string.Join("\n---\n", apiResponses));
-                //     Console.WriteLine("API responses saved to api_willys_responses_debug.json for debugging");
+                //     _logger.LogInformation("API responses saved to api_willys_responses_debug.json for debugging");
                 // }
 
                 return products;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
+                _logger.LogError($"An error has occurred during scraping: {ex.Message}");
                 throw;
             }
         }
-        public async Task<List<ScrapedProduct>> ScrapeDiscountProductsAsync(int location)
-        {
-            using var playwright = await Playwright.CreateAsync();
-            var _config = await GetConfig();
-
-            var options = new BrowserTypeLaunchOptions
-            {
-                Headless = true,
-                SlowMo = _config.RequestDelayMs
-            };
-
-            if (_isCloud)
-            {
-                options.Args = new[]
-                {
-                    "--disable-gpu",
-                    "--disable-dev-shm-usage",
-                    "--disable-setuid-sandbox",
-                    "--no-sandbox"
-                };
-            }
-            else
-            {
-
-            }
-
-            await using var browser = await playwright.Chromium.LaunchAsync(options);
-            await using var context = await browser.NewContextAsync();
-            var page = await context.NewPageAsync();
-
-            var products = new List<ScrapedProduct>();
-
-            try
-            {
-                await page.GotoAsync(_config.BaseUrl + "erbjudanden/butik", new PageGotoOptions
-                {
-                    WaitUntil = WaitUntilState.NetworkIdle
-                });
-
-                await page.WaitForSelectorAsync("[id=\"onetrust-banner-sdk\"]");
-                await page.ClickAsync("[id=\"onetrust-reject-all-handler\"]");
-
-                await page.WaitForSelectorAsync("[class=\"sc-8db9fd1a-0 haTzby\"]");
-                await page.ClickAsync("[class=\"sc-59a4afd4-0 fTQtwW sc-59bd60e8-1 fnKnyn\"]");
-
-                await page.WaitForSelectorAsync("input[placeholder=\"Sök efter din butik\"]", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
-                await page.FillAsync("input[placeholder=\"Sök efter din butik\"]", location.ToString());
-
-                await page.WaitForSelectorAsync("[data-testid=\"pickup-location-list-item\"]", new PageWaitForSelectorOptions { State = WaitForSelectorState.Visible });
-                await page.ClickAsync("[data-testid=\"pickup-location-list-item\"]");
-
-                // Close Login pop-up
-                // await page.WaitForSelectorAsync("[class=\"sc-56561d8a-5 eQuJvz\"]");
-                // await page.ClickAsync("[data-testid=\"modal-close-btn\"]");
-
-                var loadMoreButtonSelector = "[data-testid=\"load-more-btn\"]";
-                const int maxLoadMoreAttempts = 10;
-
-                for (int i = 0; i < maxLoadMoreAttempts; i++)
-                {
-                    try
-                    {
-                        await page.WaitForSelectorAsync(loadMoreButtonSelector, new PageWaitForSelectorOptions { Timeout = 5000 });
-                        await page.ClickAsync(loadMoreButtonSelector);
-
-                        Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
-                        await Task.Delay(500); // Give time for content to load
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"No more \"load more\" button found or error after {i} clicks: {ex.Message}");
-                        break;
-                    }
-                }
-
-                var articleElements = await page.QuerySelectorAllAsync(ProductListSelector);
-
-                foreach (var element in articleElements)
-                {
-                    var product = new ScrapedProduct
-                    {
-                        // StoreName = StoreName,
-                        ScrapedAt = DateTime.UtcNow
-                    };
-
-                    var nameElement = await element.QuerySelectorAsync("[itemprop=\"name\"]");
-                    if (nameElement != null)
-                    {
-                        product.RawName = await nameElement.TextContentAsync() ?? string.Empty;
-                        product.RawName = product.RawName.Trim();
-                    }
-
-                    var priceElement1 = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-14 bwnHuF\"]");
-                    var priceElement2 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-2 cCZiOx\"]");
-                    var priceElement3 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-5 ggAScU\"]");
-                    var priceElement4 = await element.QuerySelectorAsync("[class=\"sc-4b8cc2f9-6 jxQDEl\"]");
-
-                    var price1 = priceElement1 != null ? await priceElement1.TextContentAsync() : null;
-                    var price2 = priceElement2 != null ? await priceElement2.TextContentAsync() : null;
-                    var price3 = priceElement3 != null ? await priceElement3.TextContentAsync() : null;
-                    var price4 = priceElement4 != null ? await priceElement4.TextContentAsync() : null;
-
-                    if (!string.IsNullOrEmpty(price2))
-                    {
-                        if (!price2.EndsWith("."))
-                            price2 += ".";
-
-                        price2 += string.Join("", price3);
-                    }
-
-                    var saveElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
-                    var maxQElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-16 HoYMj\"]");
-
-                    var save = saveElement != null ? await saveElement.TextContentAsync() : null;
-                    var maxQ = maxQElement != null ? await maxQElement.TextContentAsync() : null;
-                    if (maxQ != null)
-                    {
-                        product.MaxQuantity = maxQ;
-                    }
-                    else
-                    {
-                        product.MaxQuantity = "Inget max antal";
-                    }
-
-                    var memberElement = await element.QuerySelectorAsync("[class=\"sc-e20bc8d3-1 bdMExn sc-4b8cc2f9-7 chdLmu\"]");
-                    var memberDiscount = memberElement != null ? await memberElement.TextContentAsync() : null;
-                    if (memberDiscount != null)
-                    {
-                        product.MemberDiscount = true;
-                    }
-
-                    var savingElement = await element.QuerySelectorAsync("[class=\"sc-6467c3d8-15 iFyTse\"]");
-                    if (savingElement != null)
-                    {
-                        // var rawDiscount = await savingElement.TextContentAsync() ?? string.Empty;
-                        // product.RawDiscount = rawDiscount.Trim();
-                    }
-
-                    // product.RawOrdPrice = string.Join(" ", new[] { price1, price2, price4 }
-                    //     .Where(p => !string.IsNullOrEmpty(p))
-                    //     .Select(p => p.Trim()));
-
-                    var brandElement = await element.QuerySelectorAsync("[itemprop=\"brand\"]");
-                    if (brandElement != null)
-                    {
-                        var brandText = await brandElement.TextContentAsync();
-                        if (!string.IsNullOrEmpty(brandText))
-                        {
-                            var parts = brandText.Split(new[] { ' ' }, 2);
-
-                            product.RawBrand = parts[0].Trim();
-
-                            if (parts.Length > 1)
-                            {
-                                var unitPart = parts[1].TrimEnd(' ').Trim();
-                                product.RawUnit = unitPart;
-                            }
-                        }
-                    }
-
-                    var imageElement = await element.QuerySelectorAsync("[itemprop=\"image\"]");
-                    if (imageElement != null)
-                    {
-                        product.ImageSrc = await imageElement.GetAttributeAsync("src") ?? string.Empty;
-                    }
-
-                    if (!string.IsNullOrEmpty(product.RawName))
-                    {
-                        products.Add(product);
-                        Console.WriteLine(product.RawBrand.ToString() + " " + product.RawName.ToString() + " " + product.RawUnit.ToString() + " " + product.RawOrdPrice.ToString() + " " + product?.RawDiscount.ToString() + " " + product.MaxQuantity.ToString() + " " + product.MemberDiscount.ToString());
-                    }
-                }
-
-                return products;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
-                throw;
-            }
-        }
-
     }
 }

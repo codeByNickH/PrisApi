@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using PrisApi.Models;
 using PrisApi.Models.Scraping;
 using PrisApi.Services.IService;
@@ -9,20 +10,22 @@ namespace PrisApi.Services
     {
         private readonly string _bnasWebhookUrl;
         private readonly string _gvlWebhookUrl;
-        public DiscordService(IOptions<BnasDiscordSettings> bnasOptions, IOptions<GvlDiscordSettings> gvlOptions)
+        private readonly ILogger<DiscordService> _logger;
+        public DiscordService(IOptions<BnasDiscordSettings> bnasOptions, IOptions<GvlDiscordSettings> gvlOptions, ILogger<DiscordService> logger)
         {
             _bnasWebhookUrl = bnasOptions.Value.BnasWebhookUrl;
             _gvlWebhookUrl = gvlOptions.Value.GvlWebhookUrl;
+            _logger = logger;
         }
         public async Task SendToDiscordAsync(List<ProductPriceChange> changes)
         {
             if (changes == null || !changes.Any()) return;
 
-            var webhookUrl = changes.First().City == "Gävle" ? _gvlWebhookUrl : _bnasWebhookUrl;
+            var webhookUrl = changes.First().City != "Bollnäs" ? _gvlWebhookUrl : _bnasWebhookUrl;
 
             if (string.IsNullOrEmpty(webhookUrl))
             {
-                Console.WriteLine($"Error: Webhook URL is missing for city: {changes.First().City}");
+                _logger.LogError("Error: Webhook URL is missing for city: {City}", changes.First().City);
                 return;
             }
 
@@ -37,16 +40,19 @@ namespace PrisApi.Services
                 var stChange = p.OldPrice == null ? 0 : Math.Abs(p.NewPrice - p.OldPrice.GetValueOrDefault());
 
                 var content = $"""
-                **🚨 Produkt: {p.ProductName}**
-                **Märke: {p?.Brand}**
-                **Land: {p?.CountryOfOrigin}**
-                **Butik: {p.StoreName},** {p.City}
+                **🚨 Produkt:** {p.ProductName}
+                **Märke:** {p?.Brand}
+                **Ursprungsland:** {p?.CountryOfOrigin}
+                **Storlek:** {p.Size}{p.Unit}
+                
+                **Butik:** {p.StoreName}
+                **Medlemserbjudande:** {(p.MemberDiscount ? "Ja" : "Nej")}
+                **Område:** {p.City}
                 {p.Address}
                 
                 {(p.MultiOffer != null ? $"**{p.MultiOffer}**" : "")}
                 **Pris:** {p.OldPrice}kr ➡ **{p.NewPrice}kr** {priceArrow} **{stChange:F2}**
                 **Jmf/{p.Unit} Pris:** {p.OldComparePrice}kr ➡ **{p.NewComparePrice}kr** {compareArrow} **{jmfChange:F2}**
-                **Unit:** {p.Size}{p.Unit}
                 
                 ----------------------------------
                 """;
@@ -61,7 +67,7 @@ namespace PrisApi.Services
 
             if (string.IsNullOrEmpty(_bnasWebhookUrl))
             {
-                Console.WriteLine("Error: BNäs Discord Webhook URL is missing.");
+                _logger.LogError("Error: BNäs Discord Webhook URL is missing.");
                 return;
             }
 
@@ -120,7 +126,7 @@ namespace PrisApi.Services
             }
         }
 
-        private async Task SendWithRetryAsync(string url, string contentString)
+        protected virtual async Task SendWithRetryAsync(string url, string contentString)
         {
             if (string.IsNullOrWhiteSpace(url)) return;
 
@@ -141,7 +147,7 @@ namespace PrisApi.Services
                     }
 
                     var responseBody = await response.Content.ReadAsStringAsync();
-                    Console.WriteLine($"Discord Webhook Failed (Attempt {i + 1}/{maxRetries}): {response.StatusCode}. Details: {responseBody}");
+                    _logger.LogError($"Discord Webhook Failed (Attempt {i + 1}/{maxRetries}): {response.StatusCode}. Details: {responseBody}");
 
                     if (response.StatusCode == System.Net.HttpStatusCode.BadRequest || response.StatusCode == System.Net.HttpStatusCode.NotFound)
                     {
@@ -150,7 +156,7 @@ namespace PrisApi.Services
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Exception sending to Discord (Attempt {i + 1}/{maxRetries}): {ex.Message}");
+                    _logger.LogError(ex, "Exception sending to Discord (Attempt {Attempt}/{MaxRetries}): {Message}", i + 1, maxRetries, ex.Message);
                 }
 
                 if (i < maxRetries - 1)

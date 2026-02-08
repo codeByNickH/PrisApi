@@ -8,15 +8,17 @@ using PrisApi.Repository.IRepository;
 
 namespace PrisApi.Services.Scrapers
 {
-    public class CitygrossScraperService
+    public class CitygrossScrapeService
     {
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
+        private readonly ILogger<CitygrossScrapeService> _logger;
         private readonly bool _isCloud;
-        public CitygrossScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
+        public CitygrossScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, ILogger<CitygrossScrapeService> logger)
         {
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
+            _logger = logger;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
@@ -92,7 +94,7 @@ namespace PrisApi.Services.Scrapers
                     {
                         if (response.Url.Contains("products?"))
                         {
-                            Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
+                            _logger.LogInformation($"API Response: {response.Url} - Status: {response.Status}");
 
                             if (response.Status == 200)
                             {
@@ -124,7 +126,7 @@ namespace PrisApi.Services.Scrapers
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing response: {ex.Message}");
+                        _logger.LogError(ex, "Error processing response: {Message}", ex.Message);
                     }
                 };
 
@@ -134,7 +136,7 @@ namespace PrisApi.Services.Scrapers
 
                 int nextPage = 3;
                 int currentPage = 2;
-                const int maxLoadMoreAttempts = 3;
+                const int maxLoadMoreAttempts = 5;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {
@@ -148,7 +150,7 @@ namespace PrisApi.Services.Scrapers
                         if (buttonExists)
                         {
                             await page.ClickAsync($"xpath={buttonSelector}");
-                            Console.WriteLine($"Successfully clicked page {currentPage} button using XPath ({i + 1}/{maxLoadMoreAttempts}). Products found: {products.Count}");
+                            _logger.LogInformation($"Successfully clicked page {currentPage} button using XPath ({i + 1}/{maxLoadMoreAttempts}). Products found: {products.Count}");
                             nextPage++;
                             currentPage++;
                             await Task.Delay(10000);
@@ -159,14 +161,14 @@ namespace PrisApi.Services.Scrapers
                         }
                         else
                         {
-                            Console.WriteLine($"Page {currentPage} button not found, pagination might be complete. Products found: {products.Count}");
+                            _logger.LogInformation($"Page {currentPage} button not found, pagination might be complete. Products found: {products.Count}");
                             nextPage -= 11;
                             currentPage -= 1;
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error clicking page {currentPage}: {ex.Message}");
+                        _logger.LogError(ex, "Error clicking page {CurrentPage}: {Message}", currentPage, ex.Message);
                         break;
                     }
                 }
@@ -175,7 +177,7 @@ namespace PrisApi.Services.Scrapers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
+                _logger.LogError(ex, "An error has occurred during scraping: {Message}", ex.Message);
                 throw;
             }
         }
