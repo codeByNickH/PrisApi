@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using PrisApi.Helper.IHelper;
+using Microsoft.Extensions.Logging;
 using PrisApi.Models;
 using PrisApi.Models.Scraping;
 
@@ -9,6 +10,12 @@ namespace PrisApi.Helper
 {
     public class ScrapeHelper : IScrapeHelper
     {
+        private readonly ILogger<ScrapeHelper> _logger;
+
+        public ScrapeHelper(ILogger<ScrapeHelper> logger)
+        {
+            _logger = logger;
+        }
         public async Task<List<ScrapedProduct>> ExtractProductsFromJson(string jsonContent, string storeName)
         {
             var products = new List<ScrapedProduct>();
@@ -38,7 +45,7 @@ namespace PrisApi.Helper
                         }
                     }
 
-                    Console.WriteLine($"Extracted {products.Count} products from ICA entities.products structure");
+                    _logger.LogInformation("Extracted {Count} products from ICA entities.products structure", products.Count);
                     return products;
                 }
                 if (root.TryGetProperty("results", out var results) &&
@@ -55,7 +62,7 @@ namespace PrisApi.Helper
                         }
                     }
 
-                    Console.WriteLine($"Extracted {products.Count} products from Coop results.items structure");
+                    _logger.LogInformation("Extracted {Count} products from Coop results.items structure", products.Count);
                     return products;
                 }
 
@@ -72,7 +79,7 @@ namespace PrisApi.Helper
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error parsing JSON: {ex.Message}");
+                _logger.LogError(ex, "Error parsing JSON: {Message}", ex.Message);
             }
 
             return products;
@@ -209,7 +216,7 @@ namespace PrisApi.Helper
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error extracting product from JSON element: {ex.Message}");
+                _logger.LogError(ex, "Error extracting product from JSON element: {Message}", ex.Message);
                 return null;
             }
 
@@ -651,7 +658,6 @@ namespace PrisApi.Helper
                     willysPromoPrice.ValueKind == JsonValueKind.Object)
                 {
                     product.RawDiscountPrice = Math.Round(ParseDecimal(GetStringProperty(willysPromoPrice, "value")), 2);
-                    Console.WriteLine(Math.Round(ParseDecimal(GetStringProperty(willysPromoPrice, "value")), 2));
                 }
                 string discComparePrice = GetStringProperty(firstPromo, "comparePrice");
                 if (!string.IsNullOrEmpty(discComparePrice))
@@ -917,56 +923,17 @@ namespace PrisApi.Helper
             string coopComparePriceUnit = GetStringProperty(element, "comparativePriceText")?.Replace("kr/", "").Replace("utan sås/spad", "").Replace("lit drickfärdig", "l");
             if (element.TryGetProperty("comparativePriceUnit", out var coopUnit) && coopUnit.ValueKind == JsonValueKind.Object)
             {
-                coopComparePriceUnit = GetStringProperty(coopUnit, "unit")
-                    .Replace("liter", "l")
-                    .Replace("meter", "m")
-                    .Replace("styck", "st");
+                var unit = GetStringProperty(coopUnit, "unit");
+                if (!string.IsNullOrEmpty(unit))
+                {
+                    coopComparePriceUnit = unit
+                        .Replace("liter", "l")
+                        .Replace("meter", "m")
+                        .Replace("styck", "st");
+                }
             }
 
             product.RawUnit = coopComparePriceUnit;
-
-            // comparativePriceData
-            // : 
-            // {b2cPrice: 49.94, b2bPrice: 44.59}
-            // comparativePriceText
-            // : 
-            // "kr/kg"
-            // comparativePriceUnit
-            // : 
-            // {unit: "kg", text: "kr/kg"}
-
-            // declarationOfOrigin
-            // : 
-            // "Svensk köttråvara"
-            // depositData
-            // : 
-            // {b2cPrice: 0, b2bPrice: 0}
-            // fromSweden
-            // : 
-            // true
-            // manufacturerName
-            // : 
-            // "Scan"
-            // packageSize
-            // : 
-            // 800
-            // packageSizeInformation
-            // : 
-            // "800 g"
-            // packageSizeUnit
-            // : 
-            // "Gram"
-            // piecePriceData
-            // : 
-            // {b2cPrice: 39.95, b2bPrice: 35.67}
-            // salesPriceData
-            // : 
-            // {b2cPrice: 39.95, b2bPrice: 35.67}
-            // salesUnit
-            // : 
-            // "Styck"
-
-
 
             if (!string.IsNullOrEmpty(coopOrdComparePrice) && !string.IsNullOrEmpty(coopComparePriceUnit))
             {

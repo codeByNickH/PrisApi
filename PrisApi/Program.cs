@@ -11,6 +11,7 @@ using PrisApi.Models;
 using PrisApi.Mapper.IMapper;
 using PrisApi.Mapper;
 using PrisApi.Services.IService;
+using PrisApi.ExceptionHandler;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,9 +43,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.Configure<BnasDiscordSettings>(builder.Configuration.GetSection("BnasDiscord"));
 builder.Services.Configure<GvlDiscordSettings>(builder.Configuration.GetSection("GvlDiscord"));
 
-builder.Services.AddControllers();
+builder.Services.AddScoped<ExceptionHandler>();
+builder.Services.AddControllers(options => options.Filters.Add<ExceptionHandler>());
 builder.Services.AddTransient<WillysScrapeService>();
 builder.Services.AddTransient<IcaScrapeService>();
+builder.Services.AddTransient<CoopScrapeService>();
+builder.Services.AddTransient<CitygrossScrapeService>();
 builder.Services.AddScoped<ScraperService>();
 builder.Services.AddScoped<IScrapeHelper, ScrapeHelper>();
 builder.Services.AddScoped<IRepository<ScraperConfig>, ConfigRepository>();

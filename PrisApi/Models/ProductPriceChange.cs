@@ -15,5 +15,6 @@ namespace PrisApi.Models
         public decimal? OldComparePrice { get; set;}
         public string MultiOffer { get; set; } = "";
         public string CountryOfOrigin { get; set; } = "";
+        public bool MemberDiscount { get; set; }
     }
 }

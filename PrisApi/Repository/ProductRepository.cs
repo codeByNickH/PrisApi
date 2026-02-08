@@ -8,6 +8,7 @@ using PrisApi.Mapper.IMapper;
 using System.Text.RegularExpressions;
 using PrisApi.Services;
 using PrisApi.Services.IService;
+using Microsoft.Extensions.Logging;
 
 namespace PrisApi.Repository
 {
@@ -15,10 +16,12 @@ namespace PrisApi.Repository
     {
         private readonly AppDbContext _dbContext;
         private readonly IDiscordService _discordService;
-        public ProductRepository(AppDbContext dbContext, IDiscordService discordService)
+        private readonly ILogger<ProductRepository> _logger;
+        public ProductRepository(AppDbContext dbContext, IDiscordService discordService, ILogger<ProductRepository> logger)
         {
             _dbContext = dbContext;
             _discordService = discordService;
+            _logger = logger;
         }
         public Task<Product> GetOnFilterAsync(Expression<Func<Product, bool>> filter = null, bool tracked = true)
         {
@@ -104,7 +107,8 @@ namespace PrisApi.Repository
                             NewComparePrice = scrapedProduct.CurrentComparePrice,
                             OldPrice = existingProduct.CurrentPrice,
                             OldComparePrice = existingProduct.CurrentComparePrice,
-                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null,
+                            MemberDiscount = scrapedProduct.MemberDiscount
 
                         });
                     }
@@ -127,7 +131,8 @@ namespace PrisApi.Repository
                                 NewComparePrice = scrapedProduct.CurrentComparePrice,
                                 OldPrice = existingProduct.CurrentPrice,
                                 OldComparePrice = existingProduct.CurrentComparePrice,
-                                MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+                                MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null,
+                                MemberDiscount = scrapedProduct.MemberDiscount
                                 
                             });
                         }
@@ -157,7 +162,8 @@ namespace PrisApi.Repository
                             NewComparePrice = scrapedProduct.CurrentComparePrice,
                             OldPrice = null,
                             OldComparePrice = null,
-                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null,
+                            MemberDiscount = scrapedProduct.MemberDiscount
 
                         });
                     }
@@ -177,7 +183,8 @@ namespace PrisApi.Repository
                             NewComparePrice = scrapedProduct.CurrentComparePrice,
                             OldPrice = null,
                             OldComparePrice = null,
-                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null
+                            MultiOffer = scrapedProduct.MinQuantity != null ? $"Multi-köp: {scrapedProduct.MinQuantity}kr" : null,
+                            MemberDiscount = scrapedProduct.MemberDiscount
 
                         });
                     }
@@ -242,7 +249,7 @@ namespace PrisApi.Repository
             await _dbContext.PriceHistories.AddRangeAsync(priceHistories);
             await _dbContext.SaveChangesAsync();
 
-            Console.WriteLine($"{toAdd.Count} ----- {toUpdate.Count} ----- {priceHistories.Count} ----- {categories.Count}");
+            _logger.LogInformation("{ToAddCount} ----- {ToUpdateCount} ----- {PriceHistoriesCount} ----- {CategoriesCount}", toAdd.Count, toUpdate.Count, priceHistories.Count, categories.Count);
             var job = new List<int>
             {
                 toAdd.Count,

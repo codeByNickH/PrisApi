@@ -144,7 +144,7 @@ namespace PrisApi.Controllers
             var jobList = new List<ScrapingJob>();
             foreach (var loc in location)
             {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
+                if (loc.StoreLocation.City == "Bollnäs" /*|| loc.StoreLocation.City == "Gävle"*/)
                 {
                     var job = await _scrapingService.ScrapeWillysAsync(config.ScraperNavigation.NavFrozen, loc, 5);
                     job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";

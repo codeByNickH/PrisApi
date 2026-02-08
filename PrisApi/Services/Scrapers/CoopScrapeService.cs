@@ -8,16 +8,17 @@ using PrisApi.Repository.IRepository;
 
 namespace PrisApi.Services.Scrapers
 {
-    public class CoopScraperService
+    public class CoopScrapeService
     {
         private readonly IScrapeHelper _scrapeHelper;
         private readonly IScrapeConfigHelper _scraperConfig;
+        private readonly ILogger<CoopScrapeService> _logger;
         private readonly bool _isCloud;
-
-        public CoopScraperService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig)
+        public CoopScrapeService(IScrapeHelper scrapeHelper, IScrapeConfigHelper scrapeConfig, ILogger<CoopScrapeService> logger)
         {
             _scrapeHelper = scrapeHelper;
             _scraperConfig = scrapeConfig;
+            _logger = logger;
 
             _isCloud = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") != null;
 
@@ -31,7 +32,7 @@ namespace PrisApi.Services.Scrapers
             using var playwright = await Playwright.CreateAsync();
             var _config = await GetConfig();
             var name = storeConfig.Name.ToLower()?.Split(' ', 2)[0] == "stora" ? storeConfig.Name.ToLower()?.Split(' ', 2)[1] : storeConfig.Name.ToLower();
-            System.Console.WriteLine(_config.ScraperSelector.SearchButtonSelector);
+
             var options = new BrowserTypeLaunchOptions
             {
                 Headless = true,
@@ -92,7 +93,7 @@ namespace PrisApi.Services.Scrapers
                 }
                 catch
                 {
-                    Console.WriteLine("No home delivery option detected, continuing..");
+                    _logger.LogInformation("No home delivery option detected, continuing..");
                 }
 
                 await page.WaitForSelectorAsync($"[{_config.ScraperSelector.SelectStoreSelector}]"); // SelectStore
@@ -108,7 +109,7 @@ namespace PrisApi.Services.Scrapers
                     {
                         if (response.Url.Contains("graphql") || response.Url.Contains("by-attribute"))
                         {
-                            Console.WriteLine($"API Response: {response.Url} - Status: {response.Status}");
+                            _logger.LogInformation($"API Response: {response.Url} - Status: {response.Status}");
 
                             if (response.Status == 200)
                             {
@@ -140,11 +141,11 @@ namespace PrisApi.Services.Scrapers
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"Error processing response: {ex.Message}");
+                        _logger.LogError(ex, "Error processing response: {Message}", ex.Message);
                     }
                 };
                 int j = 2;
-                const int maxLoadMoreAttempts = 3;
+                const int maxLoadMoreAttempts = 4;
 
                 for (int i = 0; i < maxLoadMoreAttempts; i++)
                 {
@@ -160,18 +161,18 @@ namespace PrisApi.Services.Scrapers
                         {
                             await Task.Delay(10000);
                             await page.ClickAsync(loadMoreButtonSelector, new PageClickOptions { Force = true });
-                            Console.WriteLine($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
+                            _logger.LogInformation($"Successfully clicked \"load more\" ({i + 1}/{maxLoadMoreAttempts})");
                             j++;
                         }
                         else
                         {
-                            Console.WriteLine($"Page {i + 1} button not found, pagination might be complete");
+                            _logger.LogInformation($"Page {i + 1} button not found, pagination might be complete");
                             break;
                         }
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine($"No more \"load more\" button found or error after {i} clicks: {ex.Message}");
+                        _logger.LogError(ex, "No more \"load more\" button found or error after {Attempts} clicks: {Message}", i, ex.Message);
                         break;
                     }
                 }
@@ -180,7 +181,7 @@ namespace PrisApi.Services.Scrapers
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error has occurred during scraping: {ex.Message}");
+                _logger.LogError(ex, "An error has occurred during scraping: {Message}", ex.Message);
                 throw;
             }
         }
