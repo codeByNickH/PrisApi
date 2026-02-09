@@ -45,6 +45,7 @@ builder.Services.Configure<GvlDiscordSettings>(builder.Configuration.GetSection(
 
 builder.Services.AddScoped<ExceptionHandler>();
 builder.Services.AddControllers(options => options.Filters.Add<ExceptionHandler>());
+builder.Services.AddScoped<IScrapeOrchestrator, ScrapeOrchestrator>();
 builder.Services.AddTransient<WillysScrapeService>();
 builder.Services.AddTransient<IcaScrapeService>();
 builder.Services.AddTransient<CoopScrapeService>();
