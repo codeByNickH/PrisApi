@@ -15,512 +15,236 @@ namespace PrisApi.Controllers
     [Route("api/[controller]")]
     public class IcaScraperController : ControllerBase
     {
-        private readonly ScraperService _scraperService;
-        private readonly ILogger<IcaScraperController> _logger;
-        private readonly IRepository<Store> _repository;
         private readonly IScrapeConfigHelper _configHelper;
-        private readonly AppDbContext _dbContext;
-        private readonly IDiscordService _discordService;
-        public IcaScraperController(ScraperService scraperService, ILogger<IcaScraperController> logger, IScrapeConfigHelper configHelper, IRepository<Store> repository, AppDbContext dbContext, IDiscordService discordService)
+        private readonly IScrapeOrchestrator _scrapeOrchestrator;
+        public IcaScraperController(IScrapeOrchestrator scrapeOrchestrator, IScrapeConfigHelper configHelper)
         {
-            _scraperService = scraperService;
-            _logger = logger;
+            _scrapeOrchestrator = scrapeOrchestrator;
             _configHelper = configHelper;
-            _repository = repository;
-            _dbContext = dbContext;
-            _discordService = discordService;
         }
         [HttpPost("IcaMeat")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaMeat()
         {
-            _logger.LogInformation("Scrape of Ica meat initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavMeat,
+                CategoryId = 1,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica meat",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavMeat, loc, 1);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaDairy")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDairy()
         {
-            _logger.LogInformation("Scrape of Ica dairy initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavDairy,
+                CategoryId = 2,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica dairy",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavDairy, loc, 2);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaFruit")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFruit()
         {
-            _logger.LogInformation("Scrape of Ica fruit initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavFruitAndVegetables,
+                CategoryId = 3,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica fruit",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFruitAndVegetables, loc, 3);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaPantry")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPantry()
         {
-            _logger.LogInformation("Scrape of Ica pantry initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavPantry,
+                CategoryId = 4,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica pantry",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavPantry, loc, 4);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaFrozen")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFrozen()
         {
-            _logger.LogInformation("Scrape of Ica frozen initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavFrozen,
+                CategoryId = 5,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica frozen",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFrozen, loc, 5);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaBread")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaBread()
         {
-            _logger.LogInformation("Scrape of Ica bread initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavBreadAndCookies,
+                CategoryId = 6,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica bread",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBreadAndCookies, loc, 6);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaFish")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaFish()
         {
-            _logger.LogInformation("Scrape of Ica fish initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavFishAndSeafood,
+                CategoryId = 7,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica fish",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavFishAndSeafood, loc, 7);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaVege")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaVege()
         {
-            _logger.LogInformation("Scrape of Ica vege initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavVegetarian,
+                CategoryId = 8,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica vegetarian",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavVegetarian, loc, 8);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaSnacks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaSnacks()
         {
-            _logger.LogInformation("Scrape of Ica snacks initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavIceCreamCandyAndSnacks,
+                CategoryId = 9,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica snacks",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavIceCreamCandyAndSnacks, loc, 9);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaDrinks")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaDrinks()
         {
-            _logger.LogInformation("Scrape of Ica drinks initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavBeverage,
+                CategoryId = 10,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica drinks",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavBeverage, loc, 10);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaPrePackagedMeal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaPrePackagedMeal()
         {
-            _logger.LogInformation("Scrape of Ica prepackaged initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavReadyMeals,
+                CategoryId = 11,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica prepackaged meal",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavReadyMeals, loc, 11);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaKids")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaKids()
         {
-            _logger.LogInformation("Scrape of Ica kids initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavKids,
+                CategoryId = 12,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica kids",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavKids, loc, 12);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaCleaning")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaCleaning()
         {
-            _logger.LogInformation("Scrape of Ica cleaning initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavHomeAndCleaning,
+                CategoryId = 13,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica cleaning",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHomeAndCleaning, loc, 13);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaHealth")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaHealth()
         {
-            _logger.LogInformation("Scrape of Ica health initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavHealth,
+                CategoryId = 14,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica health",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavHealth, loc, 14);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaAnimal")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaAnimal()
         {
-            _logger.LogInformation("Scrape of Ica animal initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavAnimals,
+                CategoryId = 16,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica animal",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavAnimals, loc, 16);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
         [HttpPost("IcaTobak")]
         public async Task<ActionResult<APIResponse>> ScrapeIcaTobak()
         {
-            _logger.LogInformation("Scrape of Ica tobak initiated");
-            var config = await _configHelper.GetConfig(1);
-            var location = await _repository.GetListOnFilterAsync(l => l.Name.Contains(config.StoreName));
+            var request = new ScrapeRequest
+            {
+                ConfigId = 1,
+                NavigationPath = (await _configHelper.GetConfig(1)).ScraperNavigation.NavTobacco,
+                CategoryId = 17,
+                AllowedCities = new[] { "Bollnäs", "Gävle" },
+                ActionName = "Ica tobacco",
+            };
 
-            var jobList = new List<ScrapingJob>();
-            foreach (var loc in location)
-            {
-                if (loc.StoreLocation.City == "Bollnäs" || loc.StoreLocation.City == "Gävle")
-                {
-                    var job = await _scraperService.ScrapeIcaAsync(config.ScraperNavigation.NavTobacco, loc, 17);
-                    job.StoreLocation = $"{loc.StoreLocation.City}, {loc.StoreLocation.District}";
-                    jobList.Add(job);
-                    await _dbContext.ScrapingJobs.AddAsync(job);
-                    await _dbContext.SaveChangesAsync();
-                }
-            }
-            var response = ResponseHelper.CreateApiResponse(jobList);
-            if (!response.IsSuccess)
-            {
-                await _discordService.SendErrorToDiscordAsync(jobList);
-            }
-            return response;
+            return await _scrapeOrchestrator.OrchestrateAsync(request);
         }
-
-        // [HttpPost("IcaOffers")] // Add location on this
-        // public async Task<IActionResult> ScrapeIcaOffers()
-        // {
-        //     _logger.LogInformation("Scrape of Ica offers initiated");
-
-        //     var job = await _scraperService.ScrapeIcaOffersAsync();
-
-        //     return Ok(new
-        //     {
-        //         Success = job.Success,
-        //         ProductsScraped = job.ProductsScraped,
-        //         NewProducts = job.NewProducts,
-        //         UpdatedProducts = job.UpdatedProducts,
-        //         StartedAt = job.StartedAt,
-        //         CompletedAt = job.CompletedAt,
-        //         ErrorMessage = job.ErrorMessage
-        //     });
-        // }
-
-        // [HttpPost("IcaKitchen")]
-        // public async Task<IActionResult> ScrapeIcaKitchen()
-        // {
-        //     _logger.LogInformation("Scrape of Ica kitchen initiated");
-
-        //     var job = await _scraperService.ScrapeIcaAsync(category[14], Zipcode[0].zip);
-
-        //     return Ok(new
-        //     {
-        //         Success = job.Success,
-        //         ProductsScraped = job.ProductsScraped,
-        //         NewProducts = job.NewProducts,
-        //         UpdatedProducts = job.UpdatedProducts,
-        //         StartedAt = job.StartedAt,
-        //         CompletedAt = job.CompletedAt,
-        //         ErrorMessage = job.ErrorMessage
-        //     });
-        // }
-
-        // [HttpPost("IcaTraining")]
-        // public async Task<IActionResult> ScrapeIcaTraining()
-        // {
-        //     _logger.LogInformation("Scrape of Ica training initiated");
-
-        //     var job = await _scraperService.ScrapeIcaAsync(category[16], Zipcode[0].zip);
-
-        //     return Ok(new
-        //     {
-        //         Success = job.Success,
-        //         ProductsScraped = job.ProductsScraped,
-        //         NewProducts = job.NewProducts,
-        //         UpdatedProducts = job.UpdatedProducts,
-        //         StartedAt = job.StartedAt,
-        //         CompletedAt = job.CompletedAt,
-        //         ErrorMessage = job.ErrorMessage
-        //     });
-        // }
-
-        // [HttpPost("IcaGarden")]
-        // public async Task<IActionResult> ScrapeIcaGarden()
-        // {
-        //     _logger.LogInformation("Scrape of Ica garden initiated");
-
-        //     var job = await _scraperService.ScrapeIcaAsync(category[18], Zipcode[0].zip);
-
-        //     return Ok(new
-        //     {
-        //         Success = job.Success,
-        //         ProductsScraped = job.ProductsScraped,
-        //         NewProducts = job.NewProducts,
-        //         UpdatedProducts = job.UpdatedProducts,
-        //         StartedAt = job.StartedAt,
-        //         CompletedAt = job.CompletedAt,
-        //         ErrorMessage = job.ErrorMessage
-        //     });
-        // }
     }
 }

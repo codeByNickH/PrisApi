@@ -29,8 +29,7 @@ namespace PrisApi.Services
             _coopScrapeService = coopScrapeService;
             _citygrossScrapeService = citygrossScrapeService;
         }
-
-        public async Task<ScrapingJob> ScrapeWillysAsync(string navigation, Store storeConfig, int category)
+        public async Task<ScrapingJob> ScrapeAsync(string navigation, Store storeConfig, int category)
         {
             if (string.IsNullOrWhiteSpace(navigation)) throw new ArgumentException("Navigation path cannot be null or empty.", nameof(navigation));
             ArgumentNullException.ThrowIfNull(storeConfig);
@@ -45,51 +44,28 @@ namespace PrisApi.Services
             {
                 _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
 
-                var scrapedProducts = await ScrapeWillys(navigation, storeConfig);
-
-                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
+                List<ScrapedProduct> scrapedProducts;
+                
+                if(storeConfig.Name.Contains("Willys"))
                 {
-                    var mappedProducts = await _mapping.ToProduct(scrapedProducts);
-                    var savedProduct = await _repository.SaveAsync(mappedProducts, category);
-
-                    job.NewProducts = savedProduct[0];
-                    job.UpdatedProducts = savedProduct[1];
-                    scope.Complete();
+                    scrapedProducts = await ScrapeWillys(navigation, storeConfig);
                 }
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
-                await DelayBetweenRequests();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Willys scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-            return job;
-        }
-        public async Task<ScrapingJob> ScrapeIcaAsync(string navigation, Store storeConfig, int category)
-        {
-            if (string.IsNullOrWhiteSpace(navigation)) throw new ArgumentException("Navigation path cannot be null or empty.", nameof(navigation));
-            ArgumentNullException.ThrowIfNull(storeConfig);
-
-            var job = new ScrapingJob
-            {
-                StoreName = "Ica",
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
-
-                var scrapedProducts = await ScrapeIca(navigation, storeConfig);
+                else if(storeConfig.Name.Contains("Ica"))
+                {
+                    scrapedProducts = await ScrapeIca(navigation, storeConfig);
+                }
+                else if(storeConfig.Name.Contains("Coop"))
+                {
+                    scrapedProducts = await ScrapeCoop(navigation, storeConfig);
+                }
+                else if(storeConfig.Name.Contains("City Gross"))
+                {
+                    scrapedProducts = await ScrapeCitygross(navigation, storeConfig);
+                }
+                else
+                {
+                    throw new NotSupportedException($"Store {storeConfig.Name} is not supported for scraping.");
+                }
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -117,25 +93,24 @@ namespace PrisApi.Services
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
             }
-
             return job;
         }
-        public async Task<ScrapingJob> ScrapeCoopAsync(string navigation, Store storeConfig, int category)
+        public async Task<ScrapingJob> ScrapeWillysAsync(string navigation, Store storeConfig, int category) // In ScraperServiceTests change to ScrapeAsync then remove this
         {
             if (string.IsNullOrWhiteSpace(navigation)) throw new ArgumentException("Navigation path cannot be null or empty.", nameof(navigation));
             ArgumentNullException.ThrowIfNull(storeConfig);
 
             var job = new ScrapingJob
             {
-                StoreName = "Coop",
+                StoreName = storeConfig.Name,
                 StartedAt = DateTime.UtcNow
             };
 
             try
             {
-                _logger.LogInformation("Starting Coop scraping job at {time}", job.StartedAt);
+                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
 
-                var scrapedProducts = await ScrapeCoop(navigation, storeConfig);
+                var scrapedProducts = await ScrapeWillys(navigation, storeConfig);
 
                 using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
                 {
@@ -152,67 +127,19 @@ namespace PrisApi.Services
                 job.Success = true;
                 job.CompletedAt = DateTime.UtcNow;
 
-                _logger.LogInformation("Coop scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
+                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
                 await DelayBetweenRequests();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during Coop scraping");
+                _logger.LogError(ex, "Error during Willys scraping");
 
                 job.Success = false;
                 job.ErrorMessage = ex.Message;
                 job.CompletedAt = DateTime.UtcNow;
             }
-
             return job;
         }
-        public async Task<ScrapingJob> ScrapeCityGrossAsync(string navigation, Store storeConfig, int category)
-        {
-            if (string.IsNullOrWhiteSpace(navigation)) throw new ArgumentException("Navigation path cannot be null or empty.", nameof(navigation));
-            ArgumentNullException.ThrowIfNull(storeConfig);
-
-            var job = new ScrapingJob
-            {
-                StoreName = "City Gross",
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting City Gross scraping job at {time}", job.StartedAt);
-
-                var scrapedProducts = await ScrapeCitygross(navigation, storeConfig);
-
-                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-                {
-                    var mappedProducts = await _mapping.ToProduct(scrapedProducts);
-                    var savedProduct = await _repository.SaveAsync(mappedProducts, category);
-
-                    job.NewProducts = savedProduct[0];
-                    job.UpdatedProducts = savedProduct[1];
-
-                    scope.Complete();
-                }
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("CityGross scraping completed successfully at {completedAt}. Scraped {count} products.", job.CompletedAt, job.ProductsScraped);
-                await DelayBetweenRequests();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during CityGross scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-
-            return job;
-        }
-        
         protected virtual Task<List<ScrapedProduct>> ScrapeWillys(string navigation, Store storeConfig)
         {
             return _willysScrapeService.ScrapeProductsAsync(navigation, storeConfig);
