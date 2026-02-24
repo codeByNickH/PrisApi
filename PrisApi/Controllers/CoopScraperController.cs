@@ -1,12 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
-using PrisApi.Data;
-using PrisApi.Helper;
 using PrisApi.Helper.IHelper;
-using PrisApi.Models;
 using PrisApi.Models.Responses;
 using PrisApi.Models.Scraping;
-using PrisApi.Repository.IRepository;
-using PrisApi.Services;
 using PrisApi.Services.IService;
 
 namespace PrisApi.Controllers
@@ -61,7 +56,7 @@ namespace PrisApi.Controllers
                 NavigationPath = (await _configHelper.GetConfig(3)).ScraperNavigation.NavCheese,
                 CategoryId = 2,
                 AllowedCities = new[] { "Bollnäs", "Gävle" },
-                // AllowedDistricts = new[] { "Valbo" },
+                AllowedDistricts = new[] { "Valbo" },
                 ActionName = "Coop cheese",
             };
 

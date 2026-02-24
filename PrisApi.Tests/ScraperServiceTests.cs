@@ -94,8 +94,8 @@ namespace PrisApi.Tests
         {
             var svc = new NoDelayScraperService(new NullLogger<ScraperService>(), null!, null!, null!, null!, null!, null!, null!);
 
-            await Assert.ThrowsAsync<ArgumentException>(() => svc.ScrapeWillysAsync("", new Store { Name = "x" }, 1));
-            await Assert.ThrowsAsync<ArgumentException>(() => svc.ScrapeWillysAsync("   ", new Store { Name = "x" }, 1));
+            await Assert.ThrowsAsync<ArgumentException>(() => svc.ScrapeAsync("", new Store { Name = "x" }, 1));
+            await Assert.ThrowsAsync<ArgumentException>(() => svc.ScrapeAsync("   ", new Store { Name = "x" }, 1));
         }
 
         [Fact]
@@ -103,7 +103,7 @@ namespace PrisApi.Tests
         {
             var svc = new NoDelayScraperService(new NullLogger<ScraperService>(), null!, null!, null!, null!, null!, null!, null!);
 
-            await Assert.ThrowsAsync<ArgumentNullException>(() => svc.ScrapeWillysAsync("/nav", null!, 1));
+            await Assert.ThrowsAsync<ArgumentNullException>(() => svc.ScrapeAsync("/nav", null!, 1));
         }
 
         [Fact]
@@ -114,7 +114,7 @@ namespace PrisApi.Tests
 
             var svc = new ThrowingWillysScraperService(repo, mapping);
 
-            var job = await svc.ScrapeWillysAsync("/nav", new Store { Name = "Willys" }, 1);
+            var job = await svc.ScrapeAsync("/nav", new Store { Name = "Willys" }, 1);
 
             Assert.False(job.Success);
             Assert.Contains("scrape failed", job.ErrorMessage, StringComparison.OrdinalIgnoreCase);
@@ -135,7 +135,7 @@ namespace PrisApi.Tests
 
             var svc = new ReturningWillysScraperService(scraped, repo, mapping);
 
-            var job = await svc.ScrapeWillysAsync("/nav", new Store { Name = "Willys" }, 5);
+            var job = await svc.ScrapeAsync("/nav", new Store { Name = "Willys" }, 5);
 
             Assert.True(job.Success);
             Assert.Equal(2, job.ProductsScraped);

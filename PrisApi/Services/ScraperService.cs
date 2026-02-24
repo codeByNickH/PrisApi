@@ -95,51 +95,6 @@ namespace PrisApi.Services
             }
             return job;
         }
-        public async Task<ScrapingJob> ScrapeWillysAsync(string navigation, Store storeConfig, int category) // In ScraperServiceTests change to ScrapeAsync then remove this
-        {
-            if (string.IsNullOrWhiteSpace(navigation)) throw new ArgumentException("Navigation path cannot be null or empty.", nameof(navigation));
-            ArgumentNullException.ThrowIfNull(storeConfig);
-
-            var job = new ScrapingJob
-            {
-                StoreName = storeConfig.Name,
-                StartedAt = DateTime.UtcNow
-            };
-
-            try
-            {
-                _logger.LogInformation("Starting {store} scraping job at {time}", job.StoreName, job.StartedAt);
-
-                var scrapedProducts = await ScrapeWillys(navigation, storeConfig);
-
-                using (var scope = new TransactionScope(TransactionScopeAsyncFlowOption.Enabled))
-                {
-                    var mappedProducts = await _mapping.ToProduct(scrapedProducts);
-                    var savedProduct = await _repository.SaveAsync(mappedProducts, category);
-
-                    job.NewProducts = savedProduct[0];
-                    job.UpdatedProducts = savedProduct[1];
-
-                    scope.Complete();
-                }
-
-                job.ProductsScraped = scrapedProducts.Count;
-                job.Success = true;
-                job.CompletedAt = DateTime.UtcNow;
-
-                _logger.LogInformation("{store} scraping completed successfully at {completedAt}. Scraped {count} products.", job.StoreName, job.CompletedAt, job.ProductsScraped);
-                await DelayBetweenRequests();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error during Willys scraping");
-
-                job.Success = false;
-                job.ErrorMessage = ex.Message;
-                job.CompletedAt = DateTime.UtcNow;
-            }
-            return job;
-        }
         protected virtual Task<List<ScrapedProduct>> ScrapeWillys(string navigation, Store storeConfig)
         {
             return _willysScrapeService.ScrapeProductsAsync(navigation, storeConfig);
